@@ -1364,9 +1364,9 @@ const scenes = {
     },
     actions: [
       { label: "Investiguer avant d'agir : choisir où regarder en premier", icon: "🔍", goto: 'triage' },
-      { label: "Rollback immédiat (sans investiguer)", icon: "⏮", goto: 'rollback_blind' },
+      { label: "Rollback immédiat", icon: "⏮", goto: 'rollback_blind' },
       { label: "Écrire un message client tout de suite", icon: "✉", goto: 'comm_early' },
-      { label: "Appeler Karim au téléphone (interrompre son RDV)", icon: "📞", goto: 'karim_call' }
+      { label: "Appeler Karim au téléphone", icon: "📞", goto: 'karim_call' }
     ]
   },
 
@@ -1398,7 +1398,7 @@ const scenes = {
       { label: "Logs en direct : tail -f de /var/log/app.log", icon: "📜", goto: 'logs1', flag: 'investigatedLogs' },
       { label: "Sentry : voir les erreurs groupées récentes", icon: "🐛", goto: 'sentry_first' },
       { label: "Dashboard Grafana : vue d'ensemble des métriques", icon: "📊", goto: 'dashboard_first' },
-      { label: "Slack #tech : voir le contexte récent (qui a déployé quoi)", icon: "💬", goto: 'slack_history' }
+      { label: "Slack #tech : voir le contexte récent", icon: "💬", goto: 'slack_history' }
     ]
   },
 
@@ -1424,8 +1424,8 @@ const scenes = {
       hints: "Sentry vous oriente vers records/permissions. Mais Loubna mentionne Stripe : tentation de creuser. Ne vous éparpillez pas : un seul lead à la fois."
     },
     actions: [
-      { label: "Creuser records/permissions (le pic récent)", icon: "🎯", goto: 'records_lead_found' },
-      { label: "Vérifier d'abord si c'est Stripe (Loubna y croit)", icon: "💳", goto: 'stripe_dead_end' },
+      { label: "Creuser records/permissions", icon: "🎯", goto: 'records_lead_found' },
+      { label: "Vérifier d'abord si c'est Stripe", icon: "💳", goto: 'stripe_dead_end' },
       { label: "Aller voir les logs pour confirmer", icon: "📜", goto: 'logs1', flag: 'investigatedLogs' }
     ]
   },
@@ -1476,7 +1476,7 @@ const scenes = {
     },
     actions: [
       { label: "Confirmer dans les logs avant d'agir", icon: "📜", goto: 'logs1', flag: 'investigatedLogs' },
-      { label: "Aller directement à l'action (vous avez la cause)", icon: "🎯", goto: 'records_lead_found' }
+      { label: "Aller directement à l'action", icon: "🎯", goto: 'records_lead_found' }
     ]
   },
 
@@ -1554,9 +1554,9 @@ const scenes = {
       hints: "Lire le diff confirme à 99 %. Attaquer directement est 90 % sûr. Sur un incident où Saint-Joseph attend, ces 3 min comptent."
     },
     actions: [
-      { label: "Lire le diff de la PR (confirmer à 99 %)", icon: "🔎", goto: 'confirm_via_diff' },
+      { label: "Lire le diff de la PR", icon: "🔎", goto: 'confirm_via_diff' },
       { label: "Vérifier que d'autres modules ne sont pas affectés", icon: "🧐", goto: 'check_other_modules' },
-      { label: "Attaquer directement la résolution (90 % sûr)", icon: "⚡", goto: 'action_decision' }
+      { label: "Attaquer directement la résolution", icon: "⚡", goto: 'action_decision' }
     ],
     onEnter: () => { state.flags.permissionsBugFound = true; state.flags.karimAvailable = true; }
   },
@@ -1636,7 +1636,7 @@ const scenes = {
     },
     actions: [
       { label: "Hotfix : ré-appliquer le filtre permissions et déployer", icon: "🔧", goto: 'hotfix_attempt' },
-      { label: "Rollback manuel guidé par Karim (sûr, 15 min)", icon: "⏮", goto: 'manual_rollback' },
+      { label: "Rollback manuel guidé par Karim", icon: "⏮", goto: 'manual_rollback' },
       { label: "Désactiver l'endpoint pour stopper l'hémorragie", icon: "⛔", goto: 'disable_endpoint' }
     ]
   },
@@ -1744,7 +1744,7 @@ const scenes = {
     actions: [
       { label: "Ouvrir les logs et investiguer seul", icon: "🔍", goto: 'logs1', flag: 'investigatedLogs' },
       { label: "Désactiver le endpoint /v1/records", icon: "⛔", goto: 'disable_endpoint' },
-      { label: "Attendre Karim (perdre 15 min)", icon: "⏳", goto: 'wait_karim' }
+      { label: "Attendre Karim", icon: "⏳", goto: 'wait_karim' }
     ]
   },
 
@@ -1946,7 +1946,7 @@ const scenes = {
     actions: [
       { label: "Déclarer résolu maintenant et communiquer", icon: "✅", goto: 'second_anomaly' },
       { label: "Attendre 5 min de stabilité avant de communiquer", icon: "⏳", goto: 'second_anomaly' },
-      { label: "Vérifier les modules connexes (downstream)", icon: "🔍", goto: 'second_anomaly' }
+      { label: "Vérifier les modules connexes", icon: "🔍", goto: 'second_anomaly' }
     ]
   },
 
@@ -1972,7 +1972,7 @@ const scenes = {
     },
     actions: [
       { label: "Accepter l'analyse de Loubna et continuer", icon: "✅", goto: 'communicate_resolved' },
-      { label: "Investiguer le payment quand même (par précaution)", icon: "🔍", goto: 'communicate_resolved' }
+      { label: "Investiguer le payment quand même", icon: "🔍", goto: 'communicate_resolved' }
     ]
   },
 
@@ -1993,9 +1993,9 @@ const scenes = {
       hints: "Cette dernière question est la plus importante. C'est elle qui détermine si l'équipe apprendra ou se fermera."
     },
     actions: [
-      { label: "L'erreur humaine de Théo (il a oublié le filtre)", icon: "👤", goto: 'final_blame' },
-      { label: "Le système : PR sans review QA, tests E2E désactivés, rollback cassé, déploiement sans gate", icon: "🔧", goto: 'final_systemic' },
-      { label: "Le manque de chance (ça aurait pu être n'importe qui)", icon: "🎲", goto: 'final_luck' }
+      { label: "L'erreur humaine de Théo", icon: "👤", goto: 'final_blame' },
+      { label: "Le système", icon: "🔧", goto: 'final_systemic' },
+      { label: "Le manque de chance", icon: "🎲", goto: 'final_luck' }
     ],
     onEnter: () => { state.flags.communicatedClients = true; state.flags.catherineUpdated = true; }
   },
@@ -2462,7 +2462,6 @@ function renderScene(sceneId) {
     <div class="decision-card">
       <div class="decision-title">${scene.scenario.title}</div>
       <div class="decision-context">${scene.scenario.text}</div>
-      ${scene.scenario.hints ? `<div class="context-hints"><strong>Indices</strong>${scene.scenario.hints}</div>` : ''}
     </div>
     <div class="actions-section">
       <div class="actions-title">Actions possibles · choisissez-en une</div>

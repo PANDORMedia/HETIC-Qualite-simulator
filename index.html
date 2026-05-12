@@ -46,7 +46,7 @@ body {
 ============================================================ */
 .app {
   display: grid;
-  grid-template-rows: 48px 1fr;
+  grid-template-rows: 48px 1fr auto;
   height: 100vh;
 }
 
@@ -547,8 +547,103 @@ body {
 .chart-bar-large.warn { background: linear-gradient(to top, var(--accent-amber), #fcd34d); }
 
 /* ============================================================
-   DECISION VIEW
+   DECISION PANEL (bottom dock)
 ============================================================ */
+.decision-panel {
+  background: linear-gradient(to top, var(--bg-card), var(--bg-dark));
+  border-top: 2px solid var(--accent-rose);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  max-height: 50vh;
+  transition: max-height 0.25s ease, padding 0.25s ease;
+  position: relative;
+}
+.decision-panel.collapsed {
+  max-height: 56px;
+}
+.decision-panel-header {
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid var(--border);
+}
+.decision-panel.collapsed .decision-panel-header { border-bottom: none; }
+.decision-panel-pulse {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--accent-rose);
+  animation: pulseDot 1.5s infinite;
+  flex-shrink: 0;
+}
+.decision-panel-title {
+  flex: 1;
+  display: flex; flex-direction: column;
+  min-width: 0;
+}
+.decision-panel-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent-rose);
+  font-weight: 700;
+}
+.decision-panel-scene {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.decision-panel-toggle {
+  background: var(--bg-deep);
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.decision-panel-toggle:hover { color: var(--text-primary); border-color: var(--accent-cyan); }
+.decision-panel-body {
+  padding: 0 24px 18px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.decision-panel.collapsed .decision-panel-body { display: none; }
+.decision-panel-context {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  padding-top: 14px;
+}
+.decision-panel-context strong { color: var(--text-primary); }
+.decision-panel-context code {
+  background: var(--bg-deep);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent-emerald);
+}
+.decision-panel-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 14px;
+}
 .decision-view {
   padding: 20px;
   height: 100%;
@@ -978,12 +1073,7 @@ body {
     <aside class="sidebar">
       <div class="sidebar-section">
         <div class="sidebar-label">Navigation</div>
-        <div class="nav-item" data-view="decision" id="navDecision">
-          <span class="nav-icon">🎯</span>
-          <span class="nav-label">Décision</span>
-          <span class="nav-badge pulse" id="badgeDecision">!</span>
-        </div>
-        <div class="nav-item" data-view="slack">
+        <div class="nav-item active" data-view="slack">
           <span class="nav-icon">💬</span>
           <span class="nav-label">Slack</span>
           <span class="nav-badge" id="badgeSlack">0</span>
@@ -1039,20 +1129,8 @@ body {
     <!-- CENTER: views -->
     <main class="view-area">
 
-      <!-- ===== DECISION VIEW ===== -->
-      <section class="view active" id="view-decision">
-        <div class="view-header">
-          <div class="view-title">
-            <span class="icon">🎯</span>
-            <span>Décision en cours</span>
-          </div>
-          <span class="view-subtitle" id="sceneIdLabel">--</span>
-        </div>
-        <div class="view-body decision-view" id="decisionBody"></div>
-      </section>
-
-      <!-- ===== SLACK VIEW ===== -->
-      <section class="view" id="view-slack">
+      <!-- ===== SLACK VIEW (default) ===== -->
+      <section class="view active" id="view-slack">
         <div class="view-header">
           <div class="view-title">
             <span class="icon">💬</span>
@@ -1298,6 +1376,22 @@ body {
       </div>
     </aside>
 
+  </div>
+
+  <!-- ===== DECISION PANEL (always at bottom) ===== -->
+  <div class="decision-panel" id="decisionPanel">
+    <div class="decision-panel-header" onclick="toggleDecisionPanel()">
+      <div class="decision-panel-pulse"></div>
+      <div class="decision-panel-title">
+        <span class="decision-panel-label">Décision requise · <span id="sceneIdLabel">--</span></span>
+        <span class="decision-panel-scene" id="decisionTitle">--</span>
+      </div>
+      <button class="decision-panel-toggle" id="decisionPanelToggle">Réduire</button>
+    </div>
+    <div class="decision-panel-body">
+      <div class="decision-panel-context" id="decisionContext"></div>
+      <div class="decision-panel-actions" id="decisionActions"></div>
+    </div>
   </div>
 </div>
 
@@ -2156,9 +2250,6 @@ function switchView(viewName) {
     });
     updateSlackBadge();
   }
-  if (viewName === 'decision') {
-    $('badgeDecision').style.display = 'none';
-  }
 }
 
 document.querySelectorAll('.nav-item[data-view]').forEach(item => {
@@ -2220,16 +2311,15 @@ function addMessages(messages) {
       const msgWithTime = { ...msg, time: clockStr(state.clockMinutes) };
       if (!state.messageStore[channel]) state.messageStore[channel] = [];
       state.messageStore[channel].push(msgWithTime);
-      // If currently viewing this channel, append
-      if (state.currentChannel === channel && document.querySelector('#view-slack').classList.contains('active')) {
+      // If currently viewing this channel in slack view, append directly
+      const isViewingSlack = $('view-slack').classList.contains('active');
+      if (state.currentChannel === channel && isViewingSlack) {
         $('slackMessages').appendChild(buildMessage(msgWithTime));
         $('slackMessages').scrollTop = $('slackMessages').scrollHeight;
       } else {
-        // Increment unread
         state.unread[channel] = (state.unread[channel] || 0) + 1;
         updateChannelBadge(channel);
         updateSlackBadge();
-        // Toast
         showToast(authorMeta[msg.who].name, msg.text.substring(0, 80) + (msg.text.length > 80 ? '...' : ''), 'info');
       }
     }, i * 700);
@@ -2455,21 +2545,16 @@ function renderScene(sceneId) {
   if (scene.logs && scene.logs.length) addLogs(scene.logs);
   if (scene.messages && scene.messages.length) addMessages(scene.messages);
 
-  // Render the decision card
-  const body = $('decisionBody');
-  body.innerHTML = `
-    <div class="decision-alert">Décision requise</div>
-    <div class="decision-card">
-      <div class="decision-title">${scene.scenario.title}</div>
-      <div class="decision-context">${scene.scenario.text}</div>
-    </div>
-    <div class="actions-section">
-      <div class="actions-title">Actions possibles · choisissez-en une</div>
-      <div id="actionsContainer"></div>
-    </div>
-  `;
+  // Render the bottom decision panel
+  $('decisionTitle').textContent = scene.scenario.title;
+  $('decisionContext').innerHTML = scene.scenario.text;
 
-  const cont = $('actionsContainer');
+  // Open the panel on every new decision (in case it was collapsed)
+  $('decisionPanel').classList.remove('collapsed');
+  $('decisionPanelToggle').textContent = 'Réduire';
+
+  const cont = $('decisionActions');
+  cont.innerHTML = '';
   scene.actions.forEach(action => {
     const btn = document.createElement('button');
     btn.className = 'action-btn';
@@ -2486,13 +2571,14 @@ function renderScene(sceneId) {
     cont.appendChild(btn);
   });
 
-  // Show pulsing badge on Decision nav
-  $('badgeDecision').style.display = 'inline-block';
+  // Subtle toast (so groups absorbed in another view notice the new decision)
+  showToast('Nouvelle décision', scene.scenario.title, 'warn');
+}
 
-  // If we're not on decision view, show a toast
-  if (!$('view-decision').classList.contains('active')) {
-    showToast('Nouvelle décision', scene.scenario.title, 'warn');
-  }
+function toggleDecisionPanel() {
+  const panel = $('decisionPanel');
+  panel.classList.toggle('collapsed');
+  $('decisionPanelToggle').textContent = panel.classList.contains('collapsed') ? 'Ouvrir' : 'Réduire';
 }
 
 function addDecision(text) {

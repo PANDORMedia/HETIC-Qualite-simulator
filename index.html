@@ -1208,6 +1208,36 @@ body {
           </div>
 
           <div class="dash-section">
+            <div class="dash-section-title">Infrastructure (Postgres + Worker)</div>
+            <div class="metrics-grid">
+              <div class="metric-card warning" id="m-dbConns">
+                <div class="metric-name">DB connections actives</div>
+                <div><span class="metric-big mono" id="v-dbConns">142</span><span class="metric-unit">/ 200</span></div>
+                <div class="metric-trend up" id="t-dbConns">⬆ retries app patient</div>
+                <div class="sparkline" id="spark-dbConns"></div>
+              </div>
+              <div class="metric-card warning" id="m-workerCpu">
+                <div class="metric-name">Worker CPU</div>
+                <div><span class="metric-big mono" id="v-workerCpu">89</span><span class="metric-unit">%</span></div>
+                <div class="metric-trend" id="t-workerCpu">batch email en cours</div>
+                <div class="sparkline" id="spark-workerCpu"></div>
+              </div>
+              <div class="metric-card" id="m-paymentSuccess">
+                <div class="metric-name">Payment success</div>
+                <div><span class="metric-big mono" id="v-paymentSuccess">99.4</span><span class="metric-unit">%</span></div>
+                <div class="metric-trend" id="t-paymentSuccess">nominal</div>
+                <div class="sparkline" id="spark-paymentSuccess"></div>
+              </div>
+              <div class="metric-card warning" id="m-emailQueue">
+                <div class="metric-name">Email queue depth</div>
+                <div><span class="metric-big mono" id="v-emailQueue">47</span></div>
+                <div class="metric-trend up" id="t-emailQueue">⬆ accumulation</div>
+                <div class="sparkline" id="spark-emailQueue"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dash-section">
             <div class="dash-section-title">5xx errors per minute - last 30 min</div>
             <div class="chart-large">
               <div class="chart-header">
@@ -1300,7 +1330,7 @@ const state = {
     permissionsBugFound: false,
     e2eTestMentioned: false
   },
-  metrics: { errors: 47, latency: 1850, rps: 91, tickets: 12 },
+  metrics: { errors: 47, latency: 1850, rps: 91, tickets: 12, dbConns: 142, workerCpu: 89, paymentSuccess: 99.4, emailQueue: 47 },
   outcome: null,
   currentChannel: 'tech-support',
   unread: { 'tech-support': 0, 'tech': 0, 'incidents': 0, 'exec': 0 },
@@ -1315,7 +1345,7 @@ const state = {
 const scenes = {
   start: {
     time: 22,
-    metrics: { errors: 47, latency: 1850, rps: 91, tickets: 12 },
+    metrics: { errors: 47, latency: 1850, rps: 91, tickets: 12, dbConns: 142, workerCpu: 89, paymentSuccess: 99.4, emailQueue: 47 },
     logs: [
       { type: 'info', text: 'POST /v1/records - 200 OK 412ms' },
       { type: 'info', text: 'GET /v1/records/482311 - 200 OK 385ms' },
@@ -1333,33 +1363,316 @@ const scenes = {
       hints: "Le portail médecin est impacté. L'app patient continue de fonctionner pour les écritures. Le DSI Saint-Joseph va appeler Catherine d'ici quelques minutes si rien ne bouge."
     },
     actions: [
-      { label: "Ouvrir les logs et comprendre l'erreur avant d'agir", icon: "🔍", goto: 'logs1', flag: 'investigatedLogs' },
+      { label: "Investiguer avant d'agir : choisir où regarder en premier", icon: "🔍", goto: 'triage' },
       { label: "Rollback immédiat (sans investiguer)", icon: "⏮", goto: 'rollback_blind' },
       { label: "Écrire un message client tout de suite", icon: "✉", goto: 'comm_early' },
       { label: "Appeler Karim au téléphone (interrompre son RDV)", icon: "📞", goto: 'karim_call' }
     ]
   },
 
-  logs1: {
-    time: 25,
-    metrics: { errors: 92, latency: 2400, rps: 88, tickets: 23 },
+  // ============================================================
+  // TRIAGE - choisir où chercher en premier (NEW)
+  // ============================================================
+  triage: {
+    time: 23,
+    metrics: { errors: 58, latency: 1920, rps: 90, tickets: 14, dbConns: 142, workerCpu: 89, paymentSuccess: 99.4, emailQueue: 47 },
     logs: [
-      { type: 'error', text: 'records/index.js:142 TypeError: Cannot read prop "doctorId" of null' },
-      { type: 'error', text: 'records/permissions.js:78 permission check returned null' },
-      { type: 'warn',  text: 'module: records | commit: 7f3c19a8 by tvandekerkove' },
-      { type: 'info',  text: 'rolling deployment id: dpl-29488 active since 16:05:12' }
+      { type: 'info',  text: 'GET /v1/auth/session - 200 OK 122ms' },
+      { type: 'info',  text: 'POST /v1/billing/invoices - 200 OK 234ms' },
+      { type: 'error', text: 'GET /v1/records/482404 - 500 Internal Server Error' },
+      { type: 'info',  text: 'GET /v1/search/doctors - 200 OK 891ms' },
+      { type: 'error', text: 'GET /v1/records/482405 - 500 Internal Server Error' },
+      { type: 'warn',  text: 'worker-01: CPU sustained > 85% for 4 minutes' },
+      { type: 'info',  text: 'POST /v1/messaging/send - 200 OK 156ms' }
     ],
     messages: [
-      { who: 'karim', ch: 'tech', text: "Je rentre tout juste de mon RDV. Je vois passer les alertes. C'est l'API qui renvoie du 500 sur /v1/records. Le worker tourne. Tu veux que je rollback ? Le rollback est cassé depuis avril, faut le faire à la main." }
+      { who: 'system', ch: 'incidents', text: "ALERT: HighErrorRate firing on api.feedmyhealth.io/v1/records (severity P1)" },
+      { who: 'system', ch: 'incidents', text: "ALERT: HighCpu firing on worker-01 (severity P3) - sustained > 85%" }
+    ],
+    scenario: {
+      title: "Où regarder en premier ?",
+      text: "Vous avez plusieurs sources d'information disponibles. Chacune révèle des choses différentes. Le temps file : vous ne pouvez pas tout regarder en même temps. Choisissez celle qui vous semble la plus prometteuse.",
+      hints: "Logs montrent les erreurs en temps réel. Sentry agrège les erreurs récurrentes. Le dashboard donne la vue d'ensemble. Slack a peut-être du contexte (qui a déployé quoi quand)."
+    },
+    actions: [
+      { label: "Logs en direct : tail -f de /var/log/app.log", icon: "📜", goto: 'logs1', flag: 'investigatedLogs' },
+      { label: "Sentry : voir les erreurs groupées récentes", icon: "🐛", goto: 'sentry_first' },
+      { label: "Dashboard Grafana : vue d'ensemble des métriques", icon: "📊", goto: 'dashboard_first' },
+      { label: "Slack #tech : voir le contexte récent (qui a déployé quoi)", icon: "💬", goto: 'slack_history' }
+    ]
+  },
+
+  // ============================================================
+  // SENTRY FIRST (NEW - red herrings)
+  // ============================================================
+  sentry_first: {
+    time: 25,
+    metrics: { errors: 92, latency: 2400, rps: 88, tickets: 23, dbConns: 168, workerCpu: 91, paymentSuccess: 99.2, emailQueue: 58 },
+    logs: [
+      { type: 'info',  text: 'Sentry: 3 error groups in last 10 min' },
+      { type: 'error', text: 'records/permissions.js:78 - TypeError: Cannot read prop "doctorId" of null - 47 occurrences' },
+      { type: 'warn',  text: 'billing/webhook.js:33 - StripeWebhookTimeout - 4 occurrences (intermittent, since this morning)' },
+      { type: 'warn',  text: 'notifications/email.js:182 - DuplicateEmailWarning - 12 occurrences (known issue, FMH-447 ouvert depuis 121j)' },
+      { type: 'info',  text: 'Sentry: trend analysis shows records/permissions started 16:17:08' }
+    ],
+    messages: [
+      { who: 'loubna', ch: 'tech', text: "Je vois les webhooks Stripe qui timeout par intermittence depuis ce matin. Pas de quoi paniquer mais c'est pas anodin. Vous voulez que je creuse Stripe ou je laisse pour plus tard ?" }
+    ],
+    scenario: {
+      title: "Sentry : 3 groupes d'erreurs",
+      text: "<strong>records/permissions</strong> (47 occurrences en 10 min - le suspect numéro 1), <strong>billing/webhook Stripe timeout</strong> (4 occurrences, intermittent depuis ce matin), <strong>notifications email duplicates</strong> (12 occurrences, bug connu FMH-447 ouvert depuis 4 mois).",
+      hints: "Sentry vous oriente vers records/permissions. Mais Loubna mentionne Stripe : tentation de creuser. Ne vous éparpillez pas : un seul lead à la fois."
+    },
+    actions: [
+      { label: "Creuser records/permissions (le pic récent)", icon: "🎯", goto: 'records_lead_found' },
+      { label: "Vérifier d'abord si c'est Stripe (Loubna y croit)", icon: "💳", goto: 'stripe_dead_end' },
+      { label: "Aller voir les logs pour confirmer", icon: "📜", goto: 'logs1', flag: 'investigatedLogs' }
+    ]
+  },
+
+  // ============================================================
+  // DASHBOARD FIRST (NEW - false flag distractions)
+  // ============================================================
+  dashboard_first: {
+    time: 25,
+    metrics: { errors: 92, latency: 2400, rps: 88, tickets: 23, dbConns: 168, workerCpu: 92, paymentSuccess: 99.2, emailQueue: 58 },
+    logs: [
+      { type: 'info', text: 'dashboard refreshed, last 30 min loaded' }
+    ],
+    messages: [
+      { who: 'karim', ch: 'tech', text: "Je rentre. Je vois le CPU du worker qui monte. Mais c'est le batch email qui tourne, c'est normal à cette heure. La vraie alerte c'est /v1/records." }
+    ],
+    scenario: {
+      title: "Vue d'ensemble : plusieurs signaux",
+      text: "Le dashboard montre <strong>plusieurs anomalies en parallèle</strong> : 5xx en pic sur /v1/records, CPU worker à 92 % (mais c'est l'heure du batch email), DB connections en hausse (probablement les retries de l'app patient), latence p95 dégradée. Karim arrive et vous prévient : le CPU worker est normal, ne vous laissez pas distraire.",
+      hints: "Le dashboard montre 4 anomalies. Karim vous dit que 2 sont normales (CPU worker, DB conns). La vraie cause est sur /v1/records. Mais vous ne le savez qu'avec ses dires : à vérifier ou pas ?"
+    },
+    actions: [
+      { label: "Faire confiance à Karim et creuser /v1/records", icon: "🎯", goto: 'records_lead_found' },
+      { label: "Vérifier d'abord le CPU worker", icon: "💻", goto: 'cpu_dead_end' },
+      { label: "Aller dans les logs pour avoir la vue précise", icon: "📜", goto: 'logs1', flag: 'investigatedLogs' }
+    ],
+    onEnter: () => { state.flags.karimAvailable = true; }
+  },
+
+  // ============================================================
+  // SLACK HISTORY (NEW - context-finding path)
+  // ============================================================
+  slack_history: {
+    time: 24,
+    metrics: { errors: 71, latency: 2100, rps: 89, tickets: 17, dbConns: 154, workerCpu: 88, paymentSuccess: 99.3, emailQueue: 52 },
+    logs: [],
+    messages: [
+      { who: 'theo', ch: 'tech', text: "PR #2487 mergée et déployée à 15:58. C'était le refacto de la requête records pour optimiser la perf. Ça a passé la review." },
+      { who: 'loubna', ch: 'tech', text: "Cool. T'as testé sur le flow médecin ? Les E2E sont toujours désactivés je crois." },
+      { who: 'theo', ch: 'tech', text: "J'ai testé en local. Ça marche." },
+      { who: 'mehdi', ch: 'random', text: "Quelqu'un sait pourquoi la machine à café fait des bruits bizarres ?" },
+      { who: 'system', ch: 'tech', text: "📜 Vous avez scrollé Slack vers le haut pendant 2 minutes. Vous avez trouvé la PR de Théo : déployée à 15:58 sur le module records. Loubna a posé la question de l'E2E, Théo n'a pas répondu." }
+    ],
+    scenario: {
+      title: "Slack vous donne le contexte",
+      text: "Vous avez le timing exact et l'identité du déploiement responsable. <strong>Théo</strong>, <strong>PR #2487</strong>, <strong>15:58</strong>, refacto records pour la perf. Loubna a remarqué que les E2E sont désactivés, Théo n'a pas confirmé qu'il avait testé en intégration. Vous avez votre lead.",
+      hints: "Vous avez perdu 2 minutes mais vous avez le contexte humain. Maintenant : confirmer dans les logs / Sentry, ou attaquer directement la résolution ?"
+    },
+    actions: [
+      { label: "Confirmer dans les logs avant d'agir", icon: "📜", goto: 'logs1', flag: 'investigatedLogs' },
+      { label: "Aller directement à l'action (vous avez la cause)", icon: "🎯", goto: 'records_lead_found' }
+    ]
+  },
+
+  // ============================================================
+  // STRIPE DEAD END (NEW - false trail)
+  // ============================================================
+  stripe_dead_end: {
+    time: 30,
+    metrics: { errors: 158, latency: 2900, rps: 83, tickets: 41, dbConns: 178, workerCpu: 88, paymentSuccess: 99.1, emailQueue: 66 },
+    logs: [
+      { type: 'info',  text: 'stripe-webhook: last 30 min - 4 timeouts, all retried successfully' },
+      { type: 'info',  text: 'stripe-webhook: success rate 99.2% (within normal range)' },
+      { type: 'info',  text: 'stripe.status.com: All services operational' },
+      { type: 'warn',  text: '/v1/records 5xx rate still climbing - this is NOT Stripe' }
+    ],
+    messages: [
+      { who: 'loubna', ch: 'tech', text: "OK Stripe est clean. Les timeouts sont intermittents depuis ce matin mais ce n'est pas notre cause aujourd'hui. Désolée de t'avoir orienté vers ça. La vraie piste c'est records." },
+      { who: 'catherine', ch: 'exec', text: "Vous en êtes où ? Saint-Joseph attend. J'ai besoin d'un point dans 10 minutes." }
+    ],
+    scenario: {
+      title: "Cul-de-sac Stripe : 5 minutes perdues",
+      text: "Vous avez vérifié Stripe. Stripe va bien. Les 4 timeouts intermittents sont un bug indépendant qui traîne depuis ce matin (pas critique). Pendant que vous regardiez Stripe, les erreurs records ont continué à grimper. Catherine commence à s'impatienter.",
+      hints: "Lesson : suivre Mehdi ou Loubna n'est pas une obligation. Vous devez orienter l'enquête, pas y être conduit. Revenir à records maintenant."
+    },
+    actions: [
+      { label: "Creuser records/permissions maintenant", icon: "🎯", goto: 'records_lead_found' },
+      { label: "Désactiver l'endpoint pour gagner du temps", icon: "⛔", goto: 'disable_endpoint' }
+    ]
+  },
+
+  // ============================================================
+  // CPU DEAD END (NEW - false trail)
+  // ============================================================
+  cpu_dead_end: {
+    time: 29,
+    metrics: { errors: 145, latency: 2800, rps: 83, tickets: 38, dbConns: 172, workerCpu: 78, paymentSuccess: 99.3, emailQueue: 41 },
+    logs: [
+      { type: 'info',  text: 'worker-01: top processes: email-batch 67%, cleanup-job 18%' },
+      { type: 'info',  text: 'worker-01: batch email sending nominal, ETA 5 min to completion' },
+      { type: 'info',  text: 'worker-01: CPU returning to baseline as batch finishes' },
+      { type: 'warn',  text: 'CPU was a red herring - batch email is scheduled at this hour daily' }
+    ],
+    messages: [
+      { who: 'karim', ch: 'tech', text: "Je te l'avais dit : CPU worker = batch email. C'est normal. La vraie cause est ailleurs. Tu as perdu 4 minutes." }
+    ],
+    scenario: {
+      title: "Cul-de-sac CPU : Karim avait raison",
+      text: "Le CPU du worker à 92 % était dû au batch email programmé tous les jours à 16h20. Aucun lien avec l'incident. Vous avez perdu 4 minutes en vérifiant. Karim ne le dit pas mais il avait raison de vous prévenir.",
+      hints: "Lesson : faire confiance aux experts ops qui connaissent leur infra par cœur. Karim a 14 mois d'historique. Quand il dit 'c'est normal', c'est normal."
+    },
+    actions: [
+      { label: "Aller sur /v1/records maintenant", icon: "🎯", goto: 'records_lead_found' },
+      { label: "Désactiver l'endpoint en attendant", icon: "⛔", goto: 'disable_endpoint' }
+    ]
+  },
+
+  // ============================================================
+  // RECORDS LEAD FOUND - consolidator (NEW)
+  // ============================================================
+  records_lead_found: {
+    time: 27,
+    metrics: { errors: 118, latency: 2700, rps: 87, tickets: 31, dbConns: 165, workerCpu: 82, paymentSuccess: 99.3, emailQueue: 54 },
+    logs: [
+      { type: 'error', text: 'records/permissions.js:78 - permission check returned null' },
+      { type: 'error', text: 'records/index.js:142 - TypeError: Cannot read prop "doctorId" of null' },
+      { type: 'warn',  text: 'commit 7f3c19a8 by tvandekerkove - merged at 15:54, deployed at 16:05' },
+      { type: 'info',  text: 'comparing with previous commit on this module... diff loaded' }
+    ],
+    messages: [
+      { who: 'karim', ch: 'tech', text: "OK la piste records est solide. Tu veux jeter un œil au diff de la PR avant d'agir, ou tu fais confiance et tu attaques directement ?" }
+    ],
+    scenario: {
+      title: "Lead : records/permissions, déploiement de 16h05",
+      text: "Tout converge vers <strong>records/permissions</strong>. Le déploiement de 16h05 (PR #2487 de Théo) est le suspect numéro 1. Vous avez 2 options : lire le diff de la PR pour confirmer la cause exacte (3 min de plus), ou attaquer directement la résolution (gagner 3 min).",
+      hints: "Lire le diff confirme à 99 %. Attaquer directement est 90 % sûr. Sur un incident où Saint-Joseph attend, ces 3 min comptent."
+    },
+    actions: [
+      { label: "Lire le diff de la PR (confirmer à 99 %)", icon: "🔎", goto: 'confirm_via_diff' },
+      { label: "Vérifier que d'autres modules ne sont pas affectés", icon: "🧐", goto: 'check_other_modules' },
+      { label: "Attaquer directement la résolution (90 % sûr)", icon: "⚡", goto: 'action_decision' }
+    ],
+    onEnter: () => { state.flags.permissionsBugFound = true; state.flags.karimAvailable = true; }
+  },
+
+  // ============================================================
+  // CONFIRM VIA DIFF (NEW - careful path)
+  // ============================================================
+  confirm_via_diff: {
+    time: 30,
+    metrics: { errors: 142, latency: 2810, rps: 86, tickets: 38, dbConns: 168, workerCpu: 78, paymentSuccess: 99.3, emailQueue: 58 },
+    logs: [
+      { type: 'info',  text: 'PR #2487 diff:' },
+      { type: 'info',  text: '- const records = await db.records.findByDoctor(doctorId, { withPermissionCheck: true });' },
+      { type: 'info',  text: '+ const records = await db.records.findByDoctor(doctorId);' },
+      { type: 'error', text: 'permission filter REMOVED on findByDoctor query - this is the bug' },
+      { type: 'warn',  text: 'no E2E test on this flow (disabled in CI since 2025-04-15)' }
+    ],
+    messages: [
+      { who: 'mehdi', ch: 'tech', text: "Je viens de raccrocher. Confirmé : Théo a retiré le filtre permissions de la query. Il pensait que la fonction le gérait en interne. Elle ne le gère pas." }
+    ],
+    scenario: {
+      title: "Diff lu : confirmation à 100 %",
+      text: "Le diff est sans ambiguïté. La PR retire <code>withPermissionCheck: true</code> de la query <code>findByDoctor</code>. Le filtre permissions n'est plus appliqué. Mehdi confirme. Vous avez la cause précise, mais vous avez perdu 3 minutes de plus.",
+      hints: "Confirmation totale. Vous pouvez maintenant agir avec 100 % de certitude."
+    },
+    actions: [
+      { label: "Lancer la résolution maintenant", icon: "🎯", goto: 'action_decision' }
+    ],
+    onEnter: () => { state.flags.mehdiAvailable = true; state.flags.e2eTestMentioned = true; }
+  },
+
+  // ============================================================
+  // CHECK OTHER MODULES (NEW - false flag check)
+  // ============================================================
+  check_other_modules: {
+    time: 29,
+    metrics: { errors: 132, latency: 2750, rps: 86, tickets: 35, dbConns: 167, workerCpu: 80, paymentSuccess: 99.3, emailQueue: 56 },
+    logs: [
+      { type: 'info',  text: 'auth module: all green, no 5xx' },
+      { type: 'info',  text: 'payments module: 99.3% success, no anomaly' },
+      { type: 'info',  text: 'prescriptions/signature: green, no 5xx' },
+      { type: 'info',  text: 'messaging: green, no 5xx' },
+      { type: 'success', text: 'records is the only affected module' }
+    ],
+    messages: [
+      { who: 'mehdi', ch: 'tech', text: "OK tu as fait le check global. C'est uniquement records. C'est bien d'avoir vérifié, ça évite de paniquer le board sur des modules qui vont bien." }
+    ],
+    scenario: {
+      title: "Vérification croisée : seul records est touché",
+      text: "Bonne nouvelle : auth, payments, signature, messaging - tous fonctionnent. C'est uniquement <strong>records</strong>. Vous avez perdu 2 minutes mais vous savez maintenant que l'impact est circonscrit.",
+      hints: "Cette vérification rassure surtout pour la communication client : 'seul le flow consultation médecin est impacté, le reste tourne'. Reprendre l'action."
+    },
+    actions: [
+      { label: "Lire le diff pour confirmer à 100 %", icon: "🔎", goto: 'confirm_via_diff' },
+      { label: "Lancer la résolution directement", icon: "⚡", goto: 'action_decision' }
+    ],
+    onEnter: () => { state.flags.mehdiAvailable = true; }
+  },
+
+  // ============================================================
+  // ACTION DECISION (NEW consolidator)
+  // ============================================================
+  action_decision: {
+    time: 31,
+    metrics: { errors: 165, latency: 2900, rps: 84, tickets: 44, dbConns: 172, workerCpu: 76, paymentSuccess: 99.3, emailQueue: 61 },
+    logs: [
+      { type: 'warn', text: '5xx rate elevated for 14 consecutive minutes' },
+      { type: 'warn', text: 'SLA Saint-Joseph: threshold not yet exceeded (margin: 6 min)' }
+    ],
+    messages: [
+      { who: 'mehdi', ch: 'tech', text: "Bon, on a la cause. 3 options : hotfix (10 min, propre, risque modéré), rollback manuel guidé par Karim (15 min, plus sûr), désactiver le endpoint (1 min, dégrade le service mais stoppe l'hémorragie pendant qu'on fixe). À toi de choisir." }
+    ],
+    scenario: {
+      title: "Décision d'action",
+      text: "Vous avez la cause. Vous avez 3 options claires. Le SLA Saint-Joseph se rapproche de la cassure dans 6 minutes. Chaque option a son trade-off.",
+      hints: "<strong>Hotfix</strong> : rapide mais déploie sans E2E (les tests sont désactivés). <strong>Rollback manuel</strong> : sûr mais 15 min. <strong>Désactiver l'endpoint</strong> : 1 min, mais médecins en 503 pendant que vous fixez."
+    },
+    actions: [
+      { label: "Hotfix : ré-appliquer le filtre permissions et déployer", icon: "🔧", goto: 'hotfix_attempt' },
+      { label: "Rollback manuel guidé par Karim (sûr, 15 min)", icon: "⏮", goto: 'manual_rollback' },
+      { label: "Désactiver l'endpoint pour stopper l'hémorragie", icon: "⛔", goto: 'disable_endpoint' }
+    ]
+  },
+
+  // ============================================================
+  // LOGS1 (EXISTING - modified to route to records_lead_found)
+  // ============================================================
+  logs1: {
+    time: 26,
+    metrics: { errors: 102, latency: 2480, rps: 88, tickets: 27, dbConns: 162, workerCpu: 87, paymentSuccess: 99.3, emailQueue: 55 },
+    logs: [
+      { type: 'info',  text: 'GET /v1/auth/session - 200 OK 108ms' },
+      { type: 'error', text: 'GET /v1/records/482510 - 500 Internal Server Error' },
+      { type: 'info',  text: 'POST /v1/messaging/threads - 200 OK 234ms' },
+      { type: 'error', text: 'records/index.js:142 TypeError: Cannot read prop "doctorId" of null' },
+      { type: 'info',  text: 'GET /v1/billing/invoices - 200 OK 156ms' },
+      { type: 'error', text: 'records/permissions.js:78 permission check returned null' },
+      { type: 'info',  text: 'POST /v1/notifications/email - 200 OK 67ms (queued)' },
+      { type: 'warn',  text: 'module: records | commit: 7f3c19a8 by tvandekerkove' },
+      { type: 'info',  text: 'rolling deployment id: dpl-29488 active since 16:05:12' },
+      { type: 'info',  text: 'GET /v1/search/doctors - 200 OK 1.2s (slow but green)' },
+      { type: 'warn',  text: 'stripe-webhook delayed 2.1s (intermittent since this morning)' },
+      { type: 'info',  text: 'POST /v1/appointments - 200 OK 412ms' }
+    ],
+    messages: [
+      { who: 'karim', ch: 'tech', text: "Je rentre tout juste de mon RDV. Je vois passer les alertes. C'est l'API qui renvoie du 500 sur /v1/records. Le worker tourne. Tu veux que je rollback ? Le rollback est cassé depuis avril, faut le faire à la main." },
+      { who: 'loubna', ch: 'tech', text: "Pour info, je vois des timeouts Stripe webhook par intermittence depuis ce matin. Pas critique mais c'est bizarre. Je laisse pour plus tard ?" }
     ],
     scenario: {
       title: "Les logs parlent",
-      text: "L'erreur vient du module <strong>records</strong>, commit <code>7f3c19a8</code> par Théo Vandekerkove, déployé à 16:05. Le check de permissions retourne null. Karim est arrivé et vous prévient : le rollback automatique est cassé depuis l'incident SSO d'avril.",
-      hints: "Vous avez identifié la PR responsable. Karim est dispo mais le rollback auto ne marchera pas. Vous pouvez investiguer plus, lancer un rollback manuel guidé, ou désactiver temporairement l'endpoint."
+      text: "Au milieu du bruit (auth, messaging, billing, notifications - tout normal), 2 patterns d'erreur émergent sur le module <strong>records</strong>. Commit <code>7f3c19a8</code> par Théo, déployé à 16:05. Karim arrive et confirme : le rollback auto est cassé depuis avril.",
+      hints: "Vous avez la signature de l'erreur ET le coupable potentiel. Vous pouvez creuser plus avant d'agir, ou attaquer directement."
     },
     actions: [
-      { label: "Identifier la PR et lire le code modifié", icon: "🔎", goto: 'identify_pr' },
-      { label: "Demander à Karim un rollback manuel guidé", icon: "⏮", goto: 'manual_rollback' },
+      { label: "Continuer l'investigation pour confirmer", icon: "🎯", goto: 'records_lead_found' },
+      { label: "Rollback manuel guidé par Karim maintenant", icon: "⏮", goto: 'manual_rollback' },
       { label: "Désactiver temporairement le endpoint /v1/records", icon: "⛔", goto: 'disable_endpoint' }
     ],
     onEnter: () => { state.flags.permissionsBugFound = true; state.flags.karimAvailable = true; }
@@ -1454,35 +1767,9 @@ const scenes = {
     },
     actions: [
       { label: "Désactiver le endpoint maintenant", icon: "⛔", goto: 'disable_endpoint' },
-      { label: "Identifier la cause dans les logs", icon: "🔍", goto: 'identify_pr', flag: 'investigatedLogs' }
+      { label: "Identifier la cause dans les logs", icon: "🔍", goto: 'records_lead_found', flag: 'investigatedLogs' }
     ],
     onEnter: () => { state.flags.karimAvailable = true; }
-  },
-
-  identify_pr: {
-    time: 28,
-    metrics: { errors: 118, latency: 2700, rps: 87, tickets: 31 },
-    logs: [
-      { type: 'info',  text: 'PR #2487 by tvandekerkove merged at 15:58 - "Refactor permissions check on records"' },
-      { type: 'warn',  text: 'PR was approved by 1 reviewer (kthorenfeld) - no QA sign-off' },
-      { type: 'warn',  text: 'E2E tests on records flow have been disabled in CI since 2025-04-15' },
-      { type: 'error', text: 'diff suggests permissions filter no longer applied to doctor scope queries' }
-    ],
-    messages: [
-      { who: 'mehdi', ch: 'tech', text: "Je viens de raccrocher. Je vois passer. C'est la PR de Théo sur le module records, il a refacto la requête. Il a oublié de re-appliquer le filtre permissions médecin sur la nouvelle query. Confirmé : la query renvoie correctement mais le filtre est mort." },
-      { who: 'loubna', ch: 'tech', text: "Pour info, les tests E2E sur ce flow ont été désactivés en avril après l'incident SSO. Si on les avait laissés tourner, ça aurait été pris au build." }
-    ],
-    scenario: {
-      title: "Cause identifiée",
-      text: "Vous avez la cause précise. Théo a refacto la requête de records sans appliquer le filtre permissions médecin. Le test E2E qui aurait pu prendre ça a été désactivé il y a 4 mois. Mehdi est revenu et confirme.",
-      hints: "3 options sur la table : un hotfix rapide, un rollback manuel guidé par Karim, ou désactiver le endpoint pendant que vous fixez tranquillement."
-    },
-    actions: [
-      { label: "Hotfix : ré-appliquer le filtre permissions et déployer", icon: "🔧", goto: 'hotfix_attempt' },
-      { label: "Rollback manuel guidé par Karim", icon: "⏮", goto: 'manual_rollback' },
-      { label: "Désactiver le endpoint le temps de fixer proprement", icon: "⛔", goto: 'disable_endpoint' }
-    ],
-    onEnter: () => { state.flags.mehdiAvailable = true; state.flags.e2eTestMentioned = true; }
   },
 
   manual_rollback: {
@@ -1505,7 +1792,7 @@ const scenes = {
       hints: "Reste à communiquer aux clients et à amorcer le post-mortem."
     },
     actions: [
-      { label: "Rédiger le message client + alerter Catherine", icon: "✉", goto: 'communicate_resolved' }
+      { label: "Suivre - Catherine vous interrompt pour Saint-Joseph", icon: "📞", goto: 'saint_joseph_call' }
     ],
     onEnter: () => { state.flags.rollbackAttempted = true; state.flags.rollbackFailed = false; }
   },
@@ -1530,7 +1817,7 @@ const scenes = {
       hints: "Victoire teintée d'une dette technique qui revient. Communication + post-mortem à suivre."
     },
     actions: [
-      { label: "Rédiger le message client + alerter Catherine", icon: "✉", goto: 'communicate_resolved' }
+      { label: "Suivre - Catherine vous interrompt pour Saint-Joseph", icon: "📞", goto: 'saint_joseph_call' }
     ],
     onEnter: () => { state.flags.hotfixApplied = true; state.flags.mehdiAvailable = true; }
   },
@@ -1581,7 +1868,7 @@ const scenes = {
       hints: "Reste à communiquer la résolution."
     },
     actions: [
-      { label: "Rédiger le message client + alerter Catherine", icon: "✉", goto: 'communicate_resolved' }
+      { label: "Suivre - Catherine vous interrompt pour Saint-Joseph", icon: "📞", goto: 'saint_joseph_call' }
     ],
     onEnter: () => { state.flags.hotfixApplied = true; state.flags.mehdiAvailable = true; }
   },
@@ -1606,6 +1893,87 @@ const scenes = {
       { label: "Rollback manuel avec Karim", icon: "⏮", goto: 'manual_rollback' }
     ],
     onEnter: () => { state.flags.communicatedClients = true; }
+  },
+
+  // ============================================================
+  // SAINT JOSEPH CALL (NEW - mid-action interruption)
+  // ============================================================
+  saint_joseph_call: {
+    time: 42,
+    metrics: { errors: 5, latency: 410, rps: 86, tickets: 62, dbConns: 145, workerCpu: 72, paymentSuccess: 99.4, emailQueue: 38 },
+    logs: [
+      { type: 'info', text: 'incoming call: catherine.lefranc -> lead (priority HIGH)' }
+    ],
+    messages: [
+      { who: 'catherine', ch: 'exec', text: "Le DSI de Saint-Joseph est en ligne. Il veut une réponse en 30 secondes. Je peux lui dire quoi exactement ? Service rétabli, en cours, ou cassé ?" },
+      { who: 'hadrien', ch: 'exec', text: "(ajouté à la conversation) On a un risque de perdre Saint-Joseph là ?" }
+    ],
+    scenario: {
+      title: "Saint-Joseph est en ligne",
+      text: "Catherine vous interrompt en pleine résolution. Le DSI Saint-Joseph veut une réponse <strong>maintenant</strong>. Vous pouvez : lui donner le statut précis (sain et rassurant si vous savez où vous en êtes), promettre une résolution sous 5 min (engagement risqué), ou demander à Catherine de patienter 10 min (gain de temps mais peut être perçu comme évasif).",
+      hints: "Ce que Catherine peut dire au DSI maintenant impactera durablement la relation. Précision > vitesse. Mais Hadrien arrive aussi : il guette la maturité de votre réponse."
+    },
+    actions: [
+      { label: "Statut précis : cause identifiée, résolution en cours, ETA 5 min", icon: "📋", goto: 'post_action_check' },
+      { label: "Promettre résolution sous 5 min ferme", icon: "⏱", goto: 'post_action_check' },
+      { label: "Demander 10 min pour confirmer avant de répondre", icon: "⏸", goto: 'post_action_check' }
+    ]
+  },
+
+  // ============================================================
+  // POST ACTION CHECK (NEW - verification phase)
+  // ============================================================
+  post_action_check: {
+    time: 45,
+    metrics: { errors: 0, latency: 395, rps: 87, tickets: 64, dbConns: 132, workerCpu: 68, paymentSuccess: 99.4, emailQueue: 34 },
+    logs: [
+      { type: 'success', text: '/v1/records - 200 OK 385ms (last 60s : 0 errors)' },
+      { type: 'success', text: '/v1/records - 200 OK 412ms' },
+      { type: 'success', text: '/v1/records - 200 OK 378ms' },
+      { type: 'info',    text: 'monitoring synthetic check: /portal-medecin/dashboard PASS' },
+      { type: 'info',    text: 'patient app: write path nominal' },
+      { type: 'warn',    text: '/v1/notifications/email queue depth dropping (50 → 34)' },
+      { type: 'success', text: 'sustained recovery > 90 seconds' }
+    ],
+    messages: [
+      { who: 'karim', ch: 'tech', text: "Service rétabli depuis 90 secondes. La courbe d'erreurs est revenue à zéro. Latency p95 normale. On peut considérer l'incident résolu... ou attendre 5 min de plus pour être sûr." }
+    ],
+    scenario: {
+      title: "Vérification post-résolution",
+      text: "Le service est revenu. Les 5xx sont à 0. Les checks de monitoring synthétique passent. Mais avant de communiquer la résolution définitive aux médecins, vous pouvez : déclarer résolu maintenant (gain de temps, risque léger), attendre 5 minutes de stabilité (prudent), ou vérifier les downstream (paiement, signature) sur le module impacté.",
+      hints: "Beaucoup d'équipes déclarent résolu trop tôt. Stabilité 5 min est la convention SRE. Mais les médecins attendent."
+    },
+    actions: [
+      { label: "Déclarer résolu maintenant et communiquer", icon: "✅", goto: 'second_anomaly' },
+      { label: "Attendre 5 min de stabilité avant de communiquer", icon: "⏳", goto: 'second_anomaly' },
+      { label: "Vérifier les modules connexes (downstream)", icon: "🔍", goto: 'second_anomaly' }
+    ]
+  },
+
+  // ============================================================
+  // SECOND ANOMALY (NEW - red herring after success)
+  // ============================================================
+  second_anomaly: {
+    time: 47,
+    metrics: { errors: 0, latency: 395, rps: 87, tickets: 64, dbConns: 128, workerCpu: 65, paymentSuccess: 98.7, emailQueue: 31 },
+    logs: [
+      { type: 'warn', text: 'ALERT: payment success rate dropped to 98.7% (threshold 99.0%)' },
+      { type: 'info', text: 'payment success rate over last 60 min: 99.4% → 98.7%' },
+      { type: 'info', text: 'investigating payment alert...' }
+    ],
+    messages: [
+      { who: 'loubna', ch: 'tech', text: "Alerte payment success rate à 98.7 %. Mais c'est juste mathématique : on a eu moins de paiements pendant l'incident records (les médecins ne pouvaient pas finaliser les consultations), donc le ratio des refus normaux remonte. Ce n'est PAS un nouveau problème. C'est un effet de bord de l'incident principal." },
+      { who: 'karim', ch: 'tech', text: "Confirmé. Le volume va se rééquilibrer dans l'heure. Pas d'action nécessaire." }
+    ],
+    scenario: {
+      title: "Nouvelle alerte : faux positif",
+      text: "Pendant que vous concluez l'incident, une nouvelle alerte se déclenche : payment success rate à 98.7 %. Loubna identifie immédiatement que c'est un faux positif : pendant l'incident records, moins de paiements ont eu lieu, donc les refus 'normaux' représentent un ratio plus élevé. Mathématique, pas un nouveau bug.",
+      hints: "Un lead dev / CTO immature paniquerait sur cette alerte. Un lead mature reconnaît un faux positif et passe à la communication."
+    },
+    actions: [
+      { label: "Accepter l'analyse de Loubna et continuer", icon: "✅", goto: 'communicate_resolved' },
+      { label: "Investiguer le payment quand même (par précaution)", icon: "🔍", goto: 'communicate_resolved' }
+    ]
   },
 
   communicate_resolved: {
@@ -1937,18 +2305,30 @@ function updateMetrics(m) {
   $('v-latency').textContent = state.metrics.latency;
   $('v-rps').textContent = state.metrics.rps;
   $('v-tickets').textContent = state.metrics.tickets;
+  if ($('v-dbConns')) $('v-dbConns').textContent = state.metrics.dbConns || 0;
+  if ($('v-workerCpu')) $('v-workerCpu').textContent = state.metrics.workerCpu || 0;
+  if ($('v-paymentSuccess')) $('v-paymentSuccess').textContent = (state.metrics.paymentSuccess || 0).toFixed(1);
+  if ($('v-emailQueue')) $('v-emailQueue').textContent = state.metrics.emailQueue || 0;
 
   // Status of metric cards
   setMetricLevel('errors', state.metrics.errors, [10, 50]);
   setMetricLevel('latency', state.metrics.latency, [800, 1500]);
   setMetricLevel('rps', state.metrics.rps, [60, 40], true);
   setMetricLevel('tickets', state.metrics.tickets, [10, 30]);
+  setMetricLevel('dbConns', state.metrics.dbConns || 0, [140, 180]);
+  setMetricLevel('workerCpu', state.metrics.workerCpu || 0, [75, 90]);
+  setMetricLevel('paymentSuccess', state.metrics.paymentSuccess || 100, [99.0, 98.5], true);
+  setMetricLevel('emailQueue', state.metrics.emailQueue || 0, [40, 80]);
 
   // Trends
   setTrend('errors', state.metrics.errors > 10 ? `⬆ +${state.metrics.errors - 2} vs baseline` : '— stable', state.metrics.errors > 10);
   setTrend('latency', state.metrics.latency > 800 ? `⬆ +${Math.round((state.metrics.latency / 420 - 1) * 100)}% vs baseline` : '— stable', state.metrics.latency > 800);
   setTrend('rps', state.metrics.rps < 60 ? `⬇ ${Math.round((1 - state.metrics.rps / 91) * 100)}% sous baseline` : '— normal', state.metrics.rps < 60);
   setTrend('tickets', state.metrics.tickets > 10 ? `⬆ +${state.metrics.tickets} vs baseline` : '— stable', state.metrics.tickets > 10);
+  if ($('t-dbConns')) setTrend('dbConns', (state.metrics.dbConns || 0) > 140 ? `⬆ retries patient app` : '— normal', (state.metrics.dbConns || 0) > 140);
+  if ($('t-workerCpu')) setTrend('workerCpu', (state.metrics.workerCpu || 0) > 75 ? `⬆ batch email en cours` : '— idle', (state.metrics.workerCpu || 0) > 75);
+  if ($('t-paymentSuccess')) setTrend('paymentSuccess', (state.metrics.paymentSuccess || 100) < 99 ? `⬇ légère baisse` : '— nominal', (state.metrics.paymentSuccess || 100) < 99);
+  if ($('t-emailQueue')) setTrend('emailQueue', (state.metrics.emailQueue || 0) > 40 ? `⬆ accumulation` : '— ok', (state.metrics.emailQueue || 0) > 40);
 
   drawSparklines();
   drawBigChart();
@@ -1974,12 +2354,26 @@ function setTrend(id, text, up) {
 }
 
 function drawSparklines() {
-  ['errors', 'latency', 'rps', 'tickets'].forEach(id => {
+  ['errors', 'latency', 'rps', 'tickets', 'dbConns', 'workerCpu', 'paymentSuccess', 'emailQueue'].forEach(id => {
+    if (!$('spark-' + id)) return;
     const container = $('spark-' + id);
     container.innerHTML = '';
     const current = state.metrics[id];
-    let baseline = id === 'errors' ? 2 : id === 'latency' ? 420 : id === 'rps' ? 87 : 1;
-    let isWorse = (id === 'rps') ? current < 60 : current > baseline * 2;
+    let baseline;
+    switch (id) {
+      case 'errors': baseline = 2; break;
+      case 'latency': baseline = 420; break;
+      case 'rps': baseline = 87; break;
+      case 'tickets': baseline = 1; break;
+      case 'dbConns': baseline = 80; break;
+      case 'workerCpu': baseline = 45; break;
+      case 'paymentSuccess': baseline = 99.5; break;
+      case 'emailQueue': baseline = 12; break;
+      default: baseline = 1;
+    }
+    let isWorse;
+    if (id === 'rps' || id === 'paymentSuccess') isWorse = current < baseline * 0.95;
+    else isWorse = current > baseline * 2;
     for (let i = 0; i < 15; i++) {
       const bar = document.createElement('div');
       bar.className = 'spark-bar';
@@ -2260,11 +2654,42 @@ function showReport() {
 }
 
 // ============================================================
+// BACKGROUND NOISE (Slack #random and #general)
+// ============================================================
+const backgroundNoise = [
+  { who: 'theo', ch: 'random', text: "Quelqu'un a un avis sur le restaurant indien rue Saint-Maur ? On y va à midi demain." },
+  { who: 'loubna', ch: 'random', text: "🎵 Spotify playlist 'focus' partagée pour ceux qui bossent ce soir" },
+  { who: 'mehdi', ch: 'random', text: "La machine à café fait encore le bruit. Je vote pour qu'on appelle le réparateur." },
+  { who: 'system', ch: 'general', text: "Rappel : revue annuelle des notes de frais avant le 30. Lien dans le Notion RH." },
+  { who: 'karim', ch: 'random', text: "🎉 Bon anniversaire à Pénélope ! Un peu en retard, désolé hier j'étais débordé." },
+  { who: 'theo', ch: 'random', text: "Je rejoue à Hollow Knight ce week-end, qui me rejoint en discord ?" },
+  { who: 'system', ch: 'general', text: "All-hands jeudi 17h. Hadrien va parler de la prochaine levée." },
+  { who: 'loubna', ch: 'random', text: "Café offert au prochain qui résoud le bug FMH-525 avant moi 😎" }
+];
+
+function injectBackgroundNoise() {
+  // Don't inject during boot
+  if (!document.querySelector('#app[style*="display: grid"], #app:not([style])')) return;
+  const msg = backgroundNoise[Math.floor(Math.random() * backgroundNoise.length)];
+  const channel = msg.ch;
+  const msgWithTime = { ...msg, time: clockStr(state.clockMinutes) };
+  if (!state.messageStore[channel]) state.messageStore[channel] = [];
+  state.messageStore[channel].push(msgWithTime);
+  // No toast for background noise (they're noise on purpose)
+  state.unread[channel] = (state.unread[channel] || 0) + 1;
+  // No unread badge update for random/general (they're "noise" channels)
+}
+
+// ============================================================
 // BOOT
 // ============================================================
 window.addEventListener('load', () => {
   // Inject initial alerts as messages in tech-support history so they're visible
   setTimeout(bootStep, 300);
+  // Background noise every 25-45 seconds of real time
+  setInterval(() => {
+    if (Math.random() < 0.4) injectBackgroundNoise();
+  }, 30000);
 });
 </script>
 

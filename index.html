@@ -3,370 +3,614 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FeedMyHealth - Incident Console</title>
+<title>FeedMyHealth Ops Console</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg-dark: #0a0e1a;
-  --bg-card: #111827;
+  --bg-darkest: #0a0e1a;
+  --bg-dark: #111827;
+  --bg-card: #1a2233;
   --bg-deep: #050810;
+  --bg-input: #0f1623;
   --accent-cyan: #06b6d4;
   --accent-emerald: #10b981;
   --accent-amber: #f59e0b;
   --accent-rose: #f43f5e;
   --accent-violet: #8b5cf6;
+  --accent-blue: #3b82f6;
   --text-primary: #e2e8f0;
   --text-secondary: #94a3b8;
-  --text-dim: #475569;
+  --text-dim: #64748b;
+  --text-darker: #475569;
   --border: #1e293b;
+  --border-light: #2d3a52;
   --danger: #ef4444;
+  --sidebar-w: 240px;
+  --right-pane-w: 380px;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; }
 body {
   font-family: 'Inter', sans-serif;
-  background: var(--bg-dark);
+  background: var(--bg-darkest);
   color: var(--text-primary);
-  min-height: 100vh;
-  overflow-x: hidden;
+  font-size: 14px;
+  user-select: none;
 }
 .mono { font-family: 'JetBrains Mono', monospace; }
 
-/* ===== Header ===== */
-.app-header {
-  background: var(--bg-deep);
-  border-bottom: 1px solid var(--border);
-  padding: 12px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-.app-title {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.logo-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--accent-rose);
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.2); }
-}
-.app-title h1 {
-  font-size: 1.05em;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-.app-title .subtitle {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.75em;
-  color: var(--accent-rose);
-  margin-left: 8px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-.clock {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1.1em;
-  font-weight: 600;
-  color: var(--accent-cyan);
-  background: rgba(6, 182, 212, 0.08);
-  padding: 6px 14px;
-  border-radius: 6px;
-  border: 1px solid rgba(6, 182, 212, 0.2);
-}
-.elapsed {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.8em;
-  color: var(--text-dim);
-  margin-left: 12px;
-}
-
-/* ===== Intro screen ===== */
-.intro-screen {
-  max-width: 880px;
-  margin: 60px auto;
-  padding: 0 24px;
-}
-.intro-screen h2 {
-  font-size: 2.2em;
-  font-weight: 700;
-  margin-bottom: 16px;
-  background: linear-gradient(135deg, var(--accent-rose), var(--accent-amber));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.intro-screen p {
-  font-size: 1.05em;
-  line-height: 1.7;
-  color: var(--text-secondary);
-  margin-bottom: 16px;
-}
-.intro-screen .info-box {
-  background: rgba(244, 63, 94, 0.06);
-  border: 1px solid rgba(244, 63, 94, 0.2);
-  border-radius: 10px;
-  padding: 20px;
-  margin: 24px 0;
-}
-.intro-screen .info-box.tip {
-  background: rgba(6, 182, 212, 0.06);
-  border-color: rgba(6, 182, 212, 0.2);
-}
-.start-btn {
-  background: linear-gradient(135deg, var(--accent-rose), var(--accent-amber));
-  color: white;
-  border: none;
-  padding: 14px 32px;
-  border-radius: 8px;
-  font-size: 1em;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  margin-top: 24px;
-  transition: transform 0.15s, box-shadow 0.15s;
-}
-.start-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(244, 63, 94, 0.25);
-}
-
-/* ===== Main layout ===== */
-.simulation {
-  display: none;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  padding: 16px;
-  max-width: 1600px;
-  margin: 0 auto;
-}
-.simulation.active { display: grid; }
-.left-pane {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.right-pane {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-/* ===== Cards ===== */
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.card-header {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--bg-deep);
-}
-.card-title {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.78em;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-.card-body {
-  padding: 16px;
-}
-
-/* ===== Dashboard metrics ===== */
-.metrics-grid {
+/* ============================================================
+   APP LAYOUT
+============================================================ */
+.app {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.metric {
-  background: var(--bg-deep);
-  padding: 14px;
-  border-radius: 8px;
-  border-left: 3px solid var(--text-dim);
-  transition: border-left-color 0.3s;
-}
-.metric.warning { border-left-color: var(--accent-amber); }
-.metric.danger { border-left-color: var(--accent-rose); }
-.metric.healthy { border-left-color: var(--accent-emerald); }
-.metric-label {
-  font-size: 0.72em;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 6px;
-}
-.metric-value {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1.6em;
-  font-weight: 600;
-}
-.metric-value.warning { color: var(--accent-amber); }
-.metric-value.danger { color: var(--accent-rose); }
-.metric-value.healthy { color: var(--accent-emerald); }
-.metric-trend {
-  font-size: 0.75em;
-  color: var(--text-dim);
-  margin-top: 4px;
-  font-family: 'JetBrains Mono', monospace;
+  grid-template-rows: 48px 1fr;
+  height: 100vh;
 }
 
-/* ===== Chart placeholder ===== */
-.chart {
-  height: 120px;
+/* === TOP BAR === */
+.topbar {
   background: var(--bg-deep);
-  border-radius: 8px;
-  margin-top: 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 16px;
+}
+.topbar-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+.logo-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent-rose); animation: pulseDot 1.5s infinite;
+}
+.logo-dot.healthy { background: var(--accent-emerald); animation: none; }
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(244,63,94,0.4); }
+  70% { opacity: 0.5; box-shadow: 0 0 0 6px rgba(244,63,94,0); }
+}
+.app-name {
+  font-weight: 700; font-size: 14px;
+  letter-spacing: 0.3px;
+}
+.status-pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 600;
+  padding: 4px 10px; border-radius: 4px;
+  background: rgba(244,63,94,0.12); color: var(--accent-rose);
+  letter-spacing: 1px; text-transform: uppercase;
+}
+.status-pill.healthy { background: rgba(16,185,129,0.12); color: var(--accent-emerald); }
+.clock-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; font-weight: 600;
+  background: var(--bg-card); padding: 5px 12px; border-radius: 6px;
+  border: 1px solid var(--border-light);
+}
+.clock-display .elapsed { color: var(--text-dim); font-size: 11px; margin-left: 8px; }
+
+/* === MAIN GRID === */
+.main {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr var(--right-pane-w);
+  overflow: hidden;
+}
+
+/* === SIDEBAR === */
+.sidebar {
+  background: var(--bg-deep);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+.sidebar-section {
+  padding: 14px 12px 8px;
+}
+.sidebar-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 600;
+  color: var(--text-darker);
+  text-transform: uppercase; letter-spacing: 1.5px;
+  padding: 0 8px 8px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 2px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: background 0.12s, color 0.12s;
   position: relative;
-  overflow: hidden;
 }
-.chart-bar {
+.nav-item:hover { background: var(--bg-card); color: var(--text-primary); }
+.nav-item.active { background: var(--bg-card); color: var(--text-primary); }
+.nav-item.active::before {
+  content: '';
   position: absolute;
-  bottom: 0;
-  width: 3.3%;
-  background: linear-gradient(to top, var(--accent-cyan), var(--accent-cyan) 30%, rgba(6, 182, 212, 0.3));
-  transition: height 0.5s ease;
+  left: -12px; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 18px; background: var(--accent-cyan); border-radius: 0 2px 2px 0;
 }
-.chart-bar.spike {
-  background: linear-gradient(to top, var(--accent-rose), var(--accent-rose) 30%, rgba(244, 63, 94, 0.4));
+.nav-icon {
+  width: 20px; height: 20px; display: inline-flex;
+  align-items: center; justify-content: center;
+  font-size: 14px;
 }
-.chart-label {
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.7em;
-  color: var(--text-dim);
+.nav-label { flex: 1; }
+.nav-badge {
+  background: var(--accent-rose);
+  color: white;
+  font-size: 10px; font-weight: 700;
+  padding: 2px 6px; border-radius: 10px;
+  min-width: 18px; text-align: center;
+}
+.nav-badge.muted { background: var(--text-darker); }
+.nav-badge.cyan { background: var(--accent-cyan); }
+.nav-badge.pulse { animation: badgePulse 1.5s infinite; }
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(244,63,94,0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(244,63,94,0); }
 }
 
-/* ===== Logs panel ===== */
-.logs {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.78em;
-  background: #000;
-  padding: 12px 16px;
-  border-radius: 8px;
-  height: 200px;
-  overflow-y: auto;
-  line-height: 1.6;
+.sidebar-divider {
+  height: 1px; background: var(--border); margin: 8px 0;
 }
-.log-line {
-  color: var(--text-dim);
-  margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.log-line .ts { color: var(--text-dim); }
-.log-line.warn { color: var(--accent-amber); }
-.log-line.error { color: var(--accent-rose); }
-.log-line.info { color: var(--accent-cyan); }
-.log-line.success { color: var(--accent-emerald); }
 
-/* ===== Slack panel ===== */
-.chat {
-  height: 360px;
+/* Sidebar footer (user) */
+.sidebar-footer {
+  margin-top: auto;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.user-avatar {
+  width: 32px; height: 32px;
+  background: var(--accent-cyan); color: var(--bg-deep);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 13px;
+}
+.user-info { flex: 1; min-width: 0; }
+.user-name { font-size: 12px; font-weight: 600; }
+.user-role { font-size: 10px; color: var(--text-dim); }
+
+/* === CENTER VIEW (changes based on nav selection) === */
+.view-area {
+  background: var(--bg-darkest);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.view-header {
+  background: var(--bg-dark);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.view-title {
+  font-size: 15px; font-weight: 600;
+  display: flex; align-items: center; gap: 10px;
+}
+.view-title .icon { color: var(--accent-cyan); }
+.view-subtitle {
+  font-size: 12px; color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+.view-body {
+  flex: 1;
   overflow-y: auto;
+}
+.view { display: none; height: 100%; flex-direction: column; }
+.view.active { display: flex; }
+
+/* ============================================================
+   SLACK VIEW
+============================================================ */
+.slack-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  height: 100%;
+}
+.slack-channels {
+  background: var(--bg-deep);
+  border-right: 1px solid var(--border);
+  padding: 12px 0;
+  overflow-y: auto;
+}
+.workspace-name {
+  padding: 8px 16px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.workspace-name::before {
+  content: ''; width: 18px; height: 18px;
+  background: linear-gradient(135deg, #4a154b, #ec4899);
+  border-radius: 4px;
+}
+.channel-group {
   padding: 8px 0;
 }
-.message {
-  padding: 10px 16px;
+.channel-group-header {
+  padding: 6px 16px;
+  font-size: 11px; color: var(--text-dim);
+  font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.channel-item {
+  padding: 6px 16px; display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--text-secondary);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+}
+.channel-item:hover { background: var(--bg-card); color: var(--text-primary); }
+.channel-item.active {
+  background: var(--bg-card); color: white;
+  border-left-color: var(--accent-cyan);
+}
+.channel-item .hash { color: var(--text-darker); font-weight: 600; }
+.channel-item.active .hash { color: var(--text-primary); }
+.channel-item .count {
+  margin-left: auto;
+  background: var(--accent-rose); color: white;
+  font-size: 10px; font-weight: 700;
+  padding: 1px 6px; border-radius: 8px;
+}
+.channel-item.active .count { background: var(--accent-cyan); }
+.channel-item.unread { color: var(--text-primary); font-weight: 600; }
+
+.slack-messages {
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.slack-header {
+  padding: 12px 20px;
   border-bottom: 1px solid var(--border);
-  display: flex;
-  gap: 12px;
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg-deep);
+}
+.slack-header h3 {
+  font-size: 14px; font-weight: 600;
+  display: flex; align-items: center; gap: 6px;
+}
+.slack-header .topic {
+  color: var(--text-dim); font-size: 12px;
+  border-left: 1px solid var(--border-light); padding-left: 12px;
+}
+.slack-messages-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 20px;
+}
+.day-divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 16px 0;
+  font-size: 11px; color: var(--text-dim);
+}
+.day-divider::before, .day-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.message {
+  display: flex; gap: 10px;
+  padding: 8px 0;
   animation: slideIn 0.3s ease;
 }
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(-10px); }
-  to { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .avatar {
-  width: 36px;
-  height: 36px;
+  width: 36px; height: 36px;
   border-radius: 6px;
-  background: var(--bg-deep);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.85em;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
   flex-shrink: 0;
+  color: white;
 }
-.avatar.julien { background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); }
-.avatar.karim { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); }
-.avatar.mehdi { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
-.avatar.catherine { background: rgba(139, 92, 246, 0.15); color: var(--accent-violet); }
-.avatar.hadrien { background: rgba(236, 72, 153, 0.15); color: #ec4899; }
-.avatar.loubna { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); }
-.avatar.system { background: rgba(100, 116, 139, 0.15); color: var(--text-dim); }
+.avatar.julien { background: linear-gradient(135deg, #f43f5e, #c026d3); }
+.avatar.karim { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+.avatar.mehdi { background: linear-gradient(135deg, #3b82f6, #6366f1); }
+.avatar.catherine { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
+.avatar.hadrien { background: linear-gradient(135deg, #ec4899, #f43f5e); }
+.avatar.loubna { background: linear-gradient(135deg, #10b981, #14b8a6); }
+.avatar.theo { background: linear-gradient(135deg, #06b6d4, #3b82f6); }
+.avatar.system { background: var(--text-darker); }
+.avatar.lead { background: linear-gradient(135deg, #06b6d4, #10b981); }
 .msg-body { flex: 1; min-width: 0; }
 .msg-header {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
+  display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px;
+}
+.msg-author { font-weight: 700; font-size: 13px; }
+.msg-time { font-size: 11px; color: var(--text-dim); }
+.msg-content {
+  font-size: 13.5px; color: var(--text-primary); line-height: 1.5;
+  white-space: pre-wrap; word-wrap: break-word;
+}
+.msg-content code {
+  background: var(--bg-deep); padding: 1px 6px;
+  border-radius: 3px; font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent-emerald);
+}
+.slack-input {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-deep);
+}
+.slack-input-box {
+  background: var(--bg-input);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px; color: var(--text-dim);
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   LOGS VIEW
+============================================================ */
+.logs-view {
+  background: #000;
+  font-family: 'JetBrains Mono', monospace;
+  height: 100%;
+  display: flex; flex-direction: column;
+}
+.logs-header {
+  background: #0a0a0a;
+  padding: 10px 16px;
+  border-bottom: 1px solid #222;
+  display: flex; align-items: center; gap: 12px;
+  font-size: 12px;
+}
+.logs-prompt {
+  color: var(--accent-emerald);
+  font-weight: 600;
+}
+.logs-filters {
+  margin-left: auto;
+  display: flex; gap: 4px;
+}
+.log-filter {
+  background: transparent;
+  border: 1px solid #333;
+  color: var(--text-dim);
+  padding: 3px 10px; border-radius: 4px;
+  font-size: 10px; font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.log-filter:hover { color: var(--text-primary); border-color: var(--text-dim); }
+.log-filter.active { background: rgba(6,182,212,0.15); border-color: var(--accent-cyan); color: var(--accent-cyan); }
+.logs-body {
+  flex: 1; overflow-y: auto;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+.log-line {
+  display: flex; gap: 12px;
+  padding: 1px 0;
+  color: #cbd5e1;
+  white-space: nowrap;
+  animation: slideInLog 0.2s ease;
+}
+@keyframes slideInLog { from { opacity: 0; } to { opacity: 1; } }
+.log-line .ln { color: #444; min-width: 32px; user-select: none; }
+.log-line .ts { color: #6b7280; }
+.log-line .lvl { font-weight: 600; min-width: 50px; }
+.log-line.info .lvl { color: var(--accent-cyan); }
+.log-line.warn .lvl { color: var(--accent-amber); }
+.log-line.error .lvl { color: var(--accent-rose); }
+.log-line.success .lvl { color: var(--accent-emerald); }
+.log-line.warn { color: #fde68a; }
+.log-line.error { color: #fca5a5; }
+.log-line.success { color: #86efac; }
+.log-line.info { color: #cbd5e1; }
+.cursor-blink::after {
+  content: '_';
+  animation: blink 1s infinite;
+}
+@keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+/* ============================================================
+   DASHBOARD VIEW
+============================================================ */
+.dashboard-view {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+}
+.dash-section {
+  margin-bottom: 24px;
+}
+.dash-section-title {
+  font-size: 11px; color: var(--text-dim);
+  font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.service-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+}
+.service-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+}
+.service-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.service-name { font-size: 13px; font-weight: 600; }
+.service-status {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent-emerald);
+}
+.service-status.warning { background: var(--accent-amber); animation: pulseDot 1.5s infinite; }
+.service-status.critical { background: var(--accent-rose); animation: pulseDot 1s infinite; }
+.service-meta {
+  font-size: 11px; color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+.metrics-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+}
+.metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  position: relative;
+}
+.metric-card.warning { border-color: rgba(245,158,11,0.4); }
+.metric-card.danger { border-color: rgba(244,63,94,0.4); }
+.metric-name {
+  font-size: 11px; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.5px;
   margin-bottom: 4px;
 }
-.msg-author { font-weight: 600; font-size: 0.92em; }
-.msg-time {
+.metric-big {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.72em;
+  font-size: 24px; font-weight: 700;
+  line-height: 1.1;
+}
+.metric-card.healthy .metric-big { color: var(--accent-emerald); }
+.metric-card.warning .metric-big { color: var(--accent-amber); }
+.metric-card.danger .metric-big { color: var(--accent-rose); }
+.metric-card .metric-unit { font-size: 12px; color: var(--text-dim); margin-left: 4px; }
+.metric-trend {
+  font-size: 11px;
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
   color: var(--text-dim);
 }
-.msg-channel {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.7em;
-  color: var(--text-dim);
-  background: rgba(100, 116, 139, 0.1);
-  padding: 1px 6px;
-  border-radius: 3px;
+.metric-trend.up { color: var(--accent-rose); }
+.metric-trend.down { color: var(--accent-emerald); }
+.sparkline {
+  margin-top: 8px;
+  height: 30px;
+  display: flex; align-items: flex-end; gap: 2px;
 }
-.msg-content {
-  font-size: 0.92em;
-  color: var(--text-secondary);
-  line-height: 1.55;
-  white-space: pre-wrap;
-  word-wrap: break-word;
+.spark-bar {
+  flex: 1;
+  background: var(--accent-cyan);
+  border-radius: 1px;
+  min-height: 2px;
+  opacity: 0.8;
 }
+.spark-bar.spike { background: var(--accent-rose); opacity: 1; }
+.spark-bar.warn { background: var(--accent-amber); }
 
-/* ===== Scenario panel ===== */
-.scenario {
+.chart-large {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 12px;
+}
+.chart-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.chart-title { font-size: 13px; font-weight: 600; }
+.chart-time { font-size: 11px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+.chart-area {
+  height: 120px;
+  position: relative;
+  display: flex; align-items: flex-end; gap: 2px;
+  border-bottom: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  padding-left: 4px;
+  padding-bottom: 4px;
+}
+.chart-y-label {
+  position: absolute;
+  left: -32px;
+  font-size: 10px; color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+.chart-bar-large {
+  flex: 1;
+  background: var(--accent-cyan);
+  border-radius: 1px 1px 0 0;
+  min-height: 2px;
+  transition: height 0.4s ease;
+}
+.chart-bar-large.spike { background: linear-gradient(to top, var(--accent-rose), #fb7185); }
+.chart-bar-large.warn { background: linear-gradient(to top, var(--accent-amber), #fcd34d); }
+
+/* ============================================================
+   DECISION VIEW
+============================================================ */
+.decision-view {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+}
+.decision-alert {
+  background: linear-gradient(135deg, rgba(244,63,94,0.1), rgba(244,63,94,0.04));
+  border: 1px solid rgba(244,63,94,0.3);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 11px;
+  color: var(--accent-rose);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 1.5px;
   margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
 }
-.scenario h3 {
-  font-size: 1.05em;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--text-primary);
+.decision-alert::before {
+  content: '●';
+  animation: pulseDot 1.5s infinite;
 }
-.scenario p {
-  font-size: 0.92em;
+.decision-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.decision-title {
+  font-size: 20px; font-weight: 700;
+  margin-bottom: 12px;
+}
+.decision-context {
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.7;
+  font-size: 14px;
 }
+.decision-context strong { color: var(--text-primary); }
+.context-hints {
+  background: var(--bg-deep);
+  border-left: 3px solid var(--accent-cyan);
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.context-hints strong { color: var(--accent-cyan); display: block; margin-bottom: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-/* ===== Actions ===== */
-.actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.actions-section {
+  margin-top: 20px;
+}
+.actions-title {
+  font-size: 12px; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 12px;
+  font-weight: 600;
 }
 .action-btn {
-  background: var(--bg-deep);
+  width: 100%;
+  background: var(--bg-card);
   border: 1px solid var(--border);
   color: var(--text-primary);
   padding: 14px 16px;
@@ -374,103 +618,221 @@ body {
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  font-size: 0.92em;
+  font-size: 13.5px;
+  margin-bottom: 8px;
   transition: all 0.15s;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  display: flex; align-items: center; gap: 12px;
 }
-.action-btn:hover:not(:disabled) {
+.action-btn:hover {
   border-color: var(--accent-cyan);
-  background: rgba(6, 182, 212, 0.06);
+  background: rgba(6,182,212,0.05);
   transform: translateX(2px);
 }
-.action-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-.action-btn .icon {
-  width: 28px;
-  height: 28px;
-  background: var(--bg-card);
+.action-icon {
+  width: 32px; height: 32px;
+  background: var(--bg-deep);
   border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   JOURNAL VIEW
+============================================================ */
+.journal-view {
+  padding: 20px;
+  overflow-y: auto;
+  height: 100%;
+}
+.timeline {
+  position: relative;
+  padding-left: 24px;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 8px; bottom: 8px;
+  width: 2px;
+  background: var(--border);
+}
+.timeline-item {
+  position: relative;
+  padding-bottom: 16px;
+}
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -22px; top: 6px;
+  width: 12px; height: 12px;
+  background: var(--accent-cyan);
+  border-radius: 50%;
+  border: 2px solid var(--bg-darkest);
+}
+.timeline-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--text-dim);
+  margin-bottom: 2px;
+}
+.timeline-action {
+  font-size: 13px; color: var(--text-primary);
+}
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+/* ============================================================
+   RIGHT PANE (alerts & briefing)
+============================================================ */
+.right-pane {
+  background: var(--bg-deep);
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.right-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.right-section:last-child { border-bottom: none; flex: 1; overflow-y: auto; }
+.right-section h4 {
+  font-size: 11px; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 1px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.alert-item {
+  background: var(--bg-card);
+  border-left: 3px solid var(--accent-rose);
+  padding: 10px 12px;
+  border-radius: 0 6px 6px 0;
+  font-size: 12.5px;
+  margin-bottom: 8px;
+  animation: slideInLog 0.3s ease;
+}
+.alert-item.warn { border-left-color: var(--accent-amber); }
+.alert-item.info { border-left-color: var(--accent-cyan); }
+.alert-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-dim);
+  margin-bottom: 2px;
+}
+.alert-text { color: var(--text-secondary); line-height: 1.5; }
+
+.briefing-content {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.briefing-content p { margin-bottom: 10px; }
+.briefing-content strong { color: var(--text-primary); }
+.cta-button {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 12px;
+}
+.cta-button:hover { opacity: 0.9; }
+
+/* ============================================================
+   BOOT SCREEN
+============================================================ */
+.boot-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-darkest);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85em;
+  z-index: 9999;
+  flex-direction: column;
+}
+.boot-content {
+  text-align: center;
+  max-width: 480px;
+}
+.boot-logo {
+  width: 56px; height: 56px;
+  background: linear-gradient(135deg, var(--accent-rose), var(--accent-amber));
+  border-radius: 12px;
+  margin: 0 auto 24px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
   font-weight: 700;
-  color: var(--accent-cyan);
-  flex-shrink: 0;
+  color: white;
+  animation: bootPulse 2s ease-in-out infinite;
 }
-.action-btn .label {
-  flex: 1;
+@keyframes bootPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
-.action-btn .cost {
+.boot-text {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.72em;
-  color: var(--text-dim);
-}
-
-/* ===== Decision log ===== */
-.decision-log {
-  font-size: 0.85em;
-  max-height: 200px;
-  overflow-y: auto;
-}
-.decision-item {
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  gap: 10px;
-}
-.decision-item:last-child { border-bottom: none; }
-.decision-time {
-  font-family: 'JetBrains Mono', monospace;
-  color: var(--text-dim);
-  font-size: 0.85em;
-  flex-shrink: 0;
-}
-.decision-text {
+  font-size: 12px;
   color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-align: left;
+  padding: 4px 0;
+}
+.boot-text .ok { color: var(--accent-emerald); }
+.boot-text .warn { color: var(--accent-amber); }
+.boot-text .err { color: var(--accent-rose); }
+.boot-fade { animation: bootFade 0.5s ease forwards; }
+@keyframes bootFade {
+  to { opacity: 0; pointer-events: none; }
 }
 
-/* ===== Final report ===== */
+/* ============================================================
+   REPORT SCREEN
+============================================================ */
 .report-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-darkest);
+  overflow-y: auto;
+  z-index: 9999;
   display: none;
+}
+.report-screen.active { display: block; }
+.report-content {
   max-width: 960px;
   margin: 40px auto;
   padding: 0 24px;
 }
-.report-screen.active { display: block; }
-.report-screen h2 {
-  font-size: 2em;
-  margin-bottom: 20px;
+.report-header h2 {
+  font-size: 28px; font-weight: 700;
+  margin-bottom: 8px;
+}
+.report-header .timestamp {
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  margin-bottom: 32px;
 }
 .outcome-banner {
-  padding: 20px 24px;
+  padding: 24px;
   border-radius: 12px;
   margin-bottom: 24px;
   border: 1px solid;
 }
-.outcome-banner.good {
-  background: rgba(16, 185, 129, 0.08);
-  border-color: rgba(16, 185, 129, 0.3);
-}
-.outcome-banner.medium {
-  background: rgba(245, 158, 11, 0.08);
-  border-color: rgba(245, 158, 11, 0.3);
-}
-.outcome-banner.bad {
-  background: rgba(244, 63, 94, 0.08);
-  border-color: rgba(244, 63, 94, 0.3);
-}
-.outcome-banner h3 {
-  font-size: 1.3em;
-  margin-bottom: 8px;
-}
+.outcome-banner.good { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.3); }
+.outcome-banner.medium { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.3); }
+.outcome-banner.bad { background: rgba(244,63,94,0.08); border-color: rgba(244,63,94,0.3); }
+.outcome-banner h3 { font-size: 18px; margin-bottom: 10px; }
 .outcome-banner.good h3 { color: var(--accent-emerald); }
 .outcome-banner.medium h3 { color: var(--accent-amber); }
 .outcome-banner.bad h3 { color: var(--accent-rose); }
+.outcome-banner p { color: var(--text-secondary); line-height: 1.6; }
 .report-section {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -479,40 +841,43 @@ body {
   margin-bottom: 16px;
 }
 .report-section h3 {
-  font-size: 1.05em;
-  margin-bottom: 12px;
+  font-size: 14px; margin-bottom: 14px;
   color: var(--accent-cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
 }
 .report-section ul {
   padding-left: 20px;
   color: var(--text-secondary);
   line-height: 1.7;
+  font-size: 13.5px;
 }
 .report-section ul li { margin-bottom: 8px; }
-.report-section strong { color: var(--text-primary); }
-.scores {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin: 16px 0;
+.scores-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  margin-bottom: 16px;
 }
 .score-card {
   text-align: center;
-  padding: 16px;
+  padding: 20px;
   background: var(--bg-deep);
   border-radius: 8px;
+  border: 1px solid var(--border);
 }
+.score-card.tech { border-top: 3px solid var(--accent-cyan); }
+.score-card.comm { border-top: 3px solid var(--accent-emerald); }
+.score-card.lead { border-top: 3px solid var(--accent-violet); }
 .score-value {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 2em;
-  font-weight: 700;
-  color: var(--accent-cyan);
+  font-size: 36px; font-weight: 700;
 }
+.score-card.tech .score-value { color: var(--accent-cyan); }
+.score-card.comm .score-value { color: var(--accent-emerald); }
+.score-card.lead .score-value { color: var(--accent-violet); }
 .score-label {
-  font-size: 0.78em;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  font-size: 11px; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 1px;
   margin-top: 6px;
 }
 .restart-btn {
@@ -523,179 +888,402 @@ body {
   border-radius: 8px;
   cursor: pointer;
   font-family: inherit;
-  font-size: 0.92em;
+  font-size: 14px;
   margin-top: 16px;
 }
-.restart-btn:hover {
-  background: rgba(6, 182, 212, 0.08);
-}
+.restart-btn:hover { background: rgba(6,182,212,0.08); }
 
-/* ===== Toast notifications ===== */
-.toast {
+/* ============================================================
+   TOAST
+============================================================ */
+.toast-container {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  top: 64px;
+  right: 16px;
+  z-index: 200;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.toast {
   background: var(--bg-card);
   border: 1px solid var(--accent-cyan);
-  border-radius: 8px;
-  padding: 12px 20px;
-  font-size: 0.9em;
+  border-left-width: 3px;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 13px;
   animation: toastIn 0.3s ease;
-  z-index: 200;
-  max-width: 360px;
+  max-width: 320px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
 }
-.toast.danger { border-color: var(--accent-rose); }
-.toast.warning { border-color: var(--accent-amber); }
+.toast.danger { border-color: var(--accent-rose); border-left-color: var(--accent-rose); }
+.toast.warn { border-color: var(--accent-amber); border-left-color: var(--accent-amber); }
+.toast.success { border-color: var(--accent-emerald); border-left-color: var(--accent-emerald); }
+.toast-title { font-weight: 700; margin-bottom: 2px; font-size: 12px; }
+.toast-title.danger { color: var(--accent-rose); }
+.toast-title.warn { color: var(--accent-amber); }
+.toast-title.success { color: var(--accent-emerald); }
+.toast-title.info { color: var(--accent-cyan); }
+.toast-text { color: var(--text-secondary); font-size: 12px; }
 @keyframes toastIn {
   from { opacity: 0; transform: translateX(20px); }
   to { opacity: 1; transform: translateX(0); }
 }
 
-/* ===== Responsive ===== */
-@media (max-width: 1100px) {
-  .simulation.active { grid-template-columns: 1fr; }
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+@media (max-width: 1200px) {
+  .main { grid-template-columns: 200px 1fr 320px; }
+  :root { --sidebar-w: 200px; --right-pane-w: 320px; }
 }
 
-/* ===== Scrollbar ===== */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--bg-deep); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-darker); }
 </style>
 </head>
 <body>
 
-<header class="app-header">
-  <div class="app-title">
-    <span class="logo-dot"></span>
-    <h1>FeedMyHealth - Incident Console</h1>
-    <span class="subtitle" id="modeLabel">PRÊT</span>
-  </div>
-  <div>
-    <span class="clock mono" id="clock">--:--</span>
-    <span class="elapsed" id="elapsed">T+0</span>
-  </div>
-</header>
-
-<!-- ===== Intro ===== -->
-<div class="intro-screen" id="introScreen">
-  <h2>Console de gestion d'incident</h2>
-  <p>Vous êtes lead dev / CTO chez FeedMyHealth. Il est <strong>16h17</strong>. Une release a été déployée à 16h05. Quelque chose ne va pas.</p>
-  <p>Vous avez 30 minutes pour prendre des décisions, lire les logs, communiquer aux bonnes personnes et stabiliser le service. Chaque décision a des conséquences. Chaque minute compte.</p>
-  <div class="info-box">
-    <strong>Règles de la console</strong>
-    <p style="margin-top: 8px;">Vous travaillez avec ce que vous voyez à l'écran : dashboard, logs, fil Slack, accès aux actions. Vous n'avez PAS accès à l'extérieur. Pas de Google, pas d'aide formateur.</p>
-    <p style="margin-top: 8px;">Vous discutez en groupe avant chaque décision. Une fois cliquée, l'action est validée et la suite se déclenche.</p>
-    <p style="margin-top: 8px;">À la fin (T+30), un rapport vous indique : ce que vous avez réussi, ce que vous avez raté, et pourquoi.</p>
-  </div>
-  <div class="info-box tip">
-    <strong>Conseil avant de démarrer</strong>
-    <p style="margin-top: 8px;">Désignez un capitaine (celui qui clique), un scribe (qui note vos hypothèses), et un communicant (qui rédige les messages quand demandés). Les autres lisent et discutent.</p>
-  </div>
-  <button class="start-btn" onclick="startSimulation()">Démarrer l'incident (16h22)</button>
-</div>
-
-<!-- ===== Simulation ===== -->
-<div class="simulation" id="simulationScreen">
-  <div class="left-pane">
-
-    <!-- Métriques temps réel -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">api.feedmyhealth.io - status</span>
-        <span class="mono" style="color:var(--text-dim); font-size:0.75em;" id="liveIndicator">● LIVE</span>
-      </div>
-      <div class="card-body">
-        <div class="metrics-grid">
-          <div class="metric" id="metric-errors">
-            <div class="metric-label">5xx / 5 min</div>
-            <div class="metric-value mono" id="val-errors">0</div>
-            <div class="metric-trend" id="trend-errors">stable</div>
-          </div>
-          <div class="metric" id="metric-latency">
-            <div class="metric-label">Latency p95</div>
-            <div class="metric-value mono" id="val-latency">420 ms</div>
-            <div class="metric-trend" id="trend-latency">stable</div>
-          </div>
-          <div class="metric" id="metric-rps">
-            <div class="metric-label">Requests / sec</div>
-            <div class="metric-value mono" id="val-rps">87</div>
-            <div class="metric-trend" id="trend-rps">stable</div>
-          </div>
-          <div class="metric" id="metric-tickets">
-            <div class="metric-label">Tickets support</div>
-            <div class="metric-value mono" id="val-tickets">0</div>
-            <div class="metric-trend" id="trend-tickets">stable</div>
-          </div>
-        </div>
-        <div class="chart" id="chart">
-          <span class="chart-label mono">5xx /min - 30 dernières minutes</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Logs -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">/var/log/app.log - tail -f</span>
-      </div>
-      <div class="card-body" style="padding: 0;">
-        <div class="logs" id="logsPanel"></div>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="right-pane">
-
-    <!-- Slack feed -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">slack - canaux #tech #incidents #exec</span>
-      </div>
-      <div class="card-body" style="padding: 0;">
-        <div class="chat" id="chatPanel"></div>
-      </div>
-    </div>
-
-    <!-- Scénario + Actions -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">décision</span>
-        <span class="mono" style="color:var(--text-dim); font-size:0.75em;" id="sceneId">--</span>
-      </div>
-      <div class="card-body">
-        <div class="scenario" id="scenarioPanel"></div>
-        <div class="actions" id="actionsPanel"></div>
-      </div>
-    </div>
-
-    <!-- Journal de décisions -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">journal des décisions</span>
-      </div>
-      <div class="card-body" style="padding: 12px 16px;">
-        <div class="decision-log" id="decisionLog">
-          <div style="color: var(--text-dim); font-size:0.85em;">Aucune décision encore prise.</div>
-        </div>
-      </div>
-    </div>
-
+<!-- ===== BOOT SCREEN ===== -->
+<div class="boot-screen" id="bootScreen">
+  <div class="boot-content">
+    <div class="boot-logo">F</div>
+    <div id="bootLog" style="text-align: left; font-family: 'JetBrains Mono', monospace; font-size: 12px;"></div>
   </div>
 </div>
 
-<!-- ===== Final Report ===== -->
+<!-- ===== MAIN APP ===== -->
+<div class="app" id="app" style="display: none;">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logo-dot" id="topDot"></div>
+      <span class="app-name">FeedMyHealth Ops</span>
+      <span class="status-pill" id="topStatus">SYSTEM ALERT</span>
+    </div>
+    <div class="topbar-right">
+      <span class="clock-display mono">
+        <span id="clockTime">16:22</span>
+        <span class="elapsed" id="clockElapsed">T+0</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="main">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Navigation</div>
+        <div class="nav-item" data-view="decision" id="navDecision">
+          <span class="nav-icon">🎯</span>
+          <span class="nav-label">Décision</span>
+          <span class="nav-badge pulse" id="badgeDecision">!</span>
+        </div>
+        <div class="nav-item" data-view="slack">
+          <span class="nav-icon">💬</span>
+          <span class="nav-label">Slack</span>
+          <span class="nav-badge" id="badgeSlack">0</span>
+        </div>
+        <div class="nav-item" data-view="logs">
+          <span class="nav-icon">📜</span>
+          <span class="nav-label">Logs</span>
+          <span class="nav-badge muted" id="badgeLogs">live</span>
+        </div>
+        <div class="nav-item" data-view="dashboard">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label">Dashboard</span>
+          <span class="nav-badge cyan" id="badgeDashboard">live</span>
+        </div>
+        <div class="nav-item" data-view="journal">
+          <span class="nav-icon">📋</span>
+          <span class="nav-label">Journal</span>
+          <span class="nav-badge muted" id="badgeJournal">0</span>
+        </div>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Services</div>
+        <div class="nav-item" style="cursor: default;">
+          <span class="service-status critical"></span>
+          <span class="nav-label">api.feedmyhealth.io</span>
+        </div>
+        <div class="nav-item" style="cursor: default;">
+          <span class="service-status"></span>
+          <span class="nav-label">app.feedmyhealth.io</span>
+        </div>
+        <div class="nav-item" style="cursor: default;">
+          <span class="service-status warning"></span>
+          <span class="nav-label">portail médecin</span>
+        </div>
+        <div class="nav-item" style="cursor: default;">
+          <span class="service-status"></span>
+          <span class="nav-label">postgres-prod-01</span>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">Lead Dev / CTO</div>
+          <div class="user-role">on-call · admin</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER: views -->
+    <main class="view-area">
+
+      <!-- ===== DECISION VIEW ===== -->
+      <section class="view active" id="view-decision">
+        <div class="view-header">
+          <div class="view-title">
+            <span class="icon">🎯</span>
+            <span>Décision en cours</span>
+          </div>
+          <span class="view-subtitle" id="sceneIdLabel">--</span>
+        </div>
+        <div class="view-body decision-view" id="decisionBody"></div>
+      </section>
+
+      <!-- ===== SLACK VIEW ===== -->
+      <section class="view" id="view-slack">
+        <div class="view-header">
+          <div class="view-title">
+            <span class="icon">💬</span>
+            <span>Slack - feedmyhealth.slack.com</span>
+          </div>
+          <span class="view-subtitle">connecté</span>
+        </div>
+        <div class="view-body">
+          <div class="slack-layout">
+            <aside class="slack-channels">
+              <div class="workspace-name">FeedMyHealth</div>
+              <div class="channel-group">
+                <div class="channel-group-header">Channels</div>
+                <div class="channel-item" data-channel="tech-support">
+                  <span class="hash">#</span><span>tech-support</span>
+                  <span class="count" id="cnt-tech-support" style="display:none;">0</span>
+                </div>
+                <div class="channel-item" data-channel="tech">
+                  <span class="hash">#</span><span>tech</span>
+                  <span class="count" id="cnt-tech" style="display:none;">0</span>
+                </div>
+                <div class="channel-item" data-channel="incidents">
+                  <span class="hash">#</span><span>incidents</span>
+                  <span class="count" id="cnt-incidents" style="display:none;">0</span>
+                </div>
+                <div class="channel-item" data-channel="exec">
+                  <span class="hash">#</span><span>exec</span>
+                  <span class="count" id="cnt-exec" style="display:none;">0</span>
+                </div>
+                <div class="channel-item" data-channel="random">
+                  <span class="hash">#</span><span>random</span>
+                </div>
+                <div class="channel-item" data-channel="general">
+                  <span class="hash">#</span><span>general</span>
+                </div>
+              </div>
+              <div class="channel-group">
+                <div class="channel-group-header">Direct messages</div>
+                <div class="channel-item" style="cursor:default;">
+                  <span style="color:var(--text-darker)">•</span><span style="opacity:0.5;">karim aliane</span>
+                </div>
+                <div class="channel-item" style="cursor:default;">
+                  <span style="color:var(--text-darker)">•</span><span style="opacity:0.5;">mehdi saidi</span>
+                </div>
+              </div>
+            </aside>
+            <div class="slack-messages">
+              <div class="slack-header">
+                <h3 id="slackChanName"><span style="color:var(--text-darker)">#</span><span id="slackChanText">tech-support</span></h3>
+                <span class="topic" id="slackChanTopic">tickets clients et alertes support</span>
+              </div>
+              <div class="slack-messages-body" id="slackMessages">
+                <div class="day-divider"><span>Aujourd'hui</span></div>
+              </div>
+              <div class="slack-input">
+                <div class="slack-input-box">Lecture seule pendant l'incident.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== LOGS VIEW ===== -->
+      <section class="view" id="view-logs">
+        <div class="view-header">
+          <div class="view-title">
+            <span class="icon">📜</span>
+            <span>app-prod-01 - /var/log/app.log</span>
+          </div>
+          <span class="view-subtitle">tail -f · auto-scroll</span>
+        </div>
+        <div class="view-body logs-view">
+          <div class="logs-header">
+            <span class="logs-prompt">lead@app-prod-01:~$</span>
+            <span class="mono" style="color:#94a3b8;">tail -f /var/log/app.log</span>
+            <div class="logs-filters">
+              <button class="log-filter active" data-filter="all">All</button>
+              <button class="log-filter" data-filter="info">Info</button>
+              <button class="log-filter" data-filter="warn">Warn</button>
+              <button class="log-filter" data-filter="error">Error</button>
+            </div>
+          </div>
+          <div class="logs-body" id="logsBody"></div>
+        </div>
+      </section>
+
+      <!-- ===== DASHBOARD VIEW ===== -->
+      <section class="view" id="view-dashboard">
+        <div class="view-header">
+          <div class="view-title">
+            <span class="icon">📊</span>
+            <span>Grafana - api.feedmyhealth.io</span>
+          </div>
+          <span class="view-subtitle">last 30 min · refresh 5s</span>
+        </div>
+        <div class="view-body dashboard-view">
+
+          <div class="dash-section">
+            <div class="dash-section-title">Services</div>
+            <div class="service-grid">
+              <div class="service-card">
+                <div class="service-header">
+                  <span class="service-name">api.feedmyhealth.io</span>
+                  <span class="service-status critical" id="svc-api"></span>
+                </div>
+                <div class="service-meta" id="svc-api-meta">uptime 99.71% / 30d</div>
+              </div>
+              <div class="service-card">
+                <div class="service-header">
+                  <span class="service-name">portail médecin</span>
+                  <span class="service-status warning" id="svc-portal"></span>
+                </div>
+                <div class="service-meta" id="svc-portal-meta">downstream of /v1/records</div>
+              </div>
+              <div class="service-card">
+                <div class="service-header">
+                  <span class="service-name">app patient (RN)</span>
+                  <span class="service-status" id="svc-mobile"></span>
+                </div>
+                <div class="service-meta" id="svc-mobile-meta">write path OK</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dash-section">
+            <div class="dash-section-title">Métriques (5 dernières minutes)</div>
+            <div class="metrics-grid">
+              <div class="metric-card danger" id="m-errors">
+                <div class="metric-name">5xx / 5min</div>
+                <div><span class="metric-big mono" id="v-errors">47</span></div>
+                <div class="metric-trend up" id="t-errors">⬆ +47 vs baseline</div>
+                <div class="sparkline" id="spark-errors"></div>
+              </div>
+              <div class="metric-card warning" id="m-latency">
+                <div class="metric-name">Latency p95</div>
+                <div><span class="metric-big mono" id="v-latency">1850</span><span class="metric-unit">ms</span></div>
+                <div class="metric-trend up" id="t-latency">⬆ +340% vs baseline</div>
+                <div class="sparkline" id="spark-latency"></div>
+              </div>
+              <div class="metric-card" id="m-rps">
+                <div class="metric-name">Requests / sec</div>
+                <div><span class="metric-big mono" id="v-rps">91</span></div>
+                <div class="metric-trend" id="t-rps">stable</div>
+                <div class="sparkline" id="spark-rps"></div>
+              </div>
+              <div class="metric-card warning" id="m-tickets">
+                <div class="metric-name">Tickets support</div>
+                <div><span class="metric-big mono" id="v-tickets">12</span></div>
+                <div class="metric-trend up" id="t-tickets">⬆ +12 vs baseline</div>
+                <div class="sparkline" id="spark-tickets"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dash-section">
+            <div class="dash-section-title">5xx errors per minute - last 30 min</div>
+            <div class="chart-large">
+              <div class="chart-header">
+                <span class="chart-title">/v1/records - 5xx rate</span>
+                <span class="chart-time">15:52 → 16:22</span>
+              </div>
+              <div class="chart-area" id="bigChart"></div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ===== JOURNAL VIEW ===== -->
+      <section class="view" id="view-journal">
+        <div class="view-header">
+          <div class="view-title">
+            <span class="icon">📋</span>
+            <span>Journal des décisions</span>
+          </div>
+          <span class="view-subtitle" id="journalCount">0 décisions</span>
+        </div>
+        <div class="view-body journal-view">
+          <div class="empty-state" id="journalEmpty">Aucune décision encore prise. Allez sur l'onglet Décision pour commencer.</div>
+          <div class="timeline" id="journalTimeline" style="display: none;"></div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- RIGHT PANE: ALERTS + BRIEFING -->
+    <aside class="right-pane">
+      <div class="right-section">
+        <h4>Briefing</h4>
+        <div class="briefing-content">
+          <p><strong>16h17</strong> · Première erreur 5xx détectée sur <code style="background:var(--bg-card); padding:1px 6px; border-radius:3px; font-size:11px; font-family: monospace;">/v1/records</code>.</p>
+          <p><strong>16h22</strong> · 47 erreurs en 5 min. Julien (support) vient de pinguer. Catherine demande un point dans 30 minutes.</p>
+          <p style="color:var(--text-dim); font-size: 12px; padding-top: 8px; border-top: 1px solid var(--border); margin-top: 12px;">Vous arrivez de la cuisine. Vous étiez en train de relire votre roadmap. Vous avez 30 minutes pour stabiliser le service.</p>
+        </div>
+      </div>
+
+      <div class="right-section">
+        <h4>Alertes actives</h4>
+        <div id="alertsList">
+          <div class="alert-item">
+            <div class="alert-time">16:17:22</div>
+            <div class="alert-text"><strong>HighErrorRate</strong> 5xx > threshold on /v1/records</div>
+          </div>
+          <div class="alert-item warn">
+            <div class="alert-time">16:18:10</div>
+            <div class="alert-text"><strong>HighLatency</strong> p95 > 1500ms on records</div>
+          </div>
+          <div class="alert-item info">
+            <div class="alert-time">16:20:05</div>
+            <div class="alert-text"><strong>SupportSpike</strong> +40 tickets en 5min</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- REPORT SCREEN -->
 <div class="report-screen" id="reportScreen"></div>
 
 <script>
-// ===========================================================
-// State
-// ===========================================================
+// ============================================================
+// STATE
+// ============================================================
 const state = {
   scene: 'start',
-  startTime: new Date(2026, 0, 1, 16, 22),
-  clockMinutes: 22, // current minute (16:XX)
+  clockMinutes: 22,
   decisions: [],
   flags: {
     investigatedLogs: false,
@@ -712,37 +1300,37 @@ const state = {
     permissionsBugFound: false,
     e2eTestMentioned: false
   },
-  metrics: {
-    errors: 0,
-    latency: 420,
-    rps: 87,
-    tickets: 0
-  },
-  outcome: null
+  metrics: { errors: 47, latency: 1850, rps: 91, tickets: 12 },
+  outcome: null,
+  currentChannel: 'tech-support',
+  unread: { 'tech-support': 0, 'tech': 0, 'incidents': 0, 'exec': 0 },
+  logLineCount: 0,
+  logFilter: 'all',
+  messageStore: { 'tech-support': [], 'tech': [], 'incidents': [], 'exec': [] }
 };
 
-// ===========================================================
-// Scenes
-// ===========================================================
+// ============================================================
+// SCENES (same narrative branching as v1)
+// ============================================================
 const scenes = {
-
   start: {
     time: 22,
     metrics: { errors: 47, latency: 1850, rps: 91, tickets: 12 },
     logs: [
-      { type: 'info', text: '16:17:02 INFO POST /v1/records - 200 OK 412ms' },
-      { type: 'info', text: '16:17:04 INFO GET /v1/records/482311 - 200 OK 385ms' },
-      { type: 'error', text: '16:17:08 ERROR GET /v1/records/482312 - 500 Internal Server Error' },
-      { type: 'error', text: '16:17:11 ERROR GET /v1/records/482314 - 500 Internal Server Error' },
-      { type: 'error', text: '16:17:15 ERROR GET /v1/records/482317 - 500 Internal Server Error' },
-      { type: 'warn',  text: '16:17:22 WARN  Rate of 5xx exceeding threshold on /v1/records' }
+      { type: 'info', text: 'POST /v1/records - 200 OK 412ms' },
+      { type: 'info', text: 'GET /v1/records/482311 - 200 OK 385ms' },
+      { type: 'error', text: 'GET /v1/records/482312 - 500 Internal Server Error' },
+      { type: 'error', text: 'GET /v1/records/482314 - 500 Internal Server Error' },
+      { type: 'error', text: 'GET /v1/records/482317 - 500 Internal Server Error' },
+      { type: 'warn',  text: 'Rate of 5xx exceeding threshold on /v1/records' }
     ],
     messages: [
-      { who: 'julien', ch: '#tech-support', text: "On a 40 tickets en 5 minutes. Les médecins disent qu'ils n'ont plus accès aux dossiers patients. Erreur 500. Saint-Joseph nous a déjà appelés 2 fois. Vous êtes au courant ? Je dis quoi aux clients ?" }
+      { who: 'julien', ch: 'tech-support', text: "On a 40 tickets en 5 minutes. Les médecins disent qu'ils n'ont plus accès aux dossiers patients. Erreur 500. Saint-Joseph nous a déjà appelés 2 fois. Vous êtes au courant ? Je dis quoi aux clients ?" }
     ],
     scenario: {
       title: "16h22 - Première alerte",
-      text: "Vous étiez en train de relire votre roadmap. Julien vient de vous ping. Le dashboard montre une montée brutale d'erreurs 500 sur /v1/records. Une release est passée à 16h05 il y a 17 minutes. Mehdi est en appel client. Karim n'est pas joignable (RDV médical). Que faites-vous en premier ?"
+      text: "Vous étiez en train de relire votre roadmap quand Julien vous a pingé sur #tech-support. Le dashboard montre une montée brutale d'erreurs 500 sur <code>/v1/records</code>. Une release est passée à 16h05 il y a 17 minutes. Mehdi est en appel client. Karim n'est pas joignable (RDV médical).",
+      hints: "Le portail médecin est impacté. L'app patient continue de fonctionner pour les écritures. Le DSI Saint-Joseph va appeler Catherine d'ici quelques minutes si rien ne bouge."
     },
     actions: [
       { label: "Ouvrir les logs et comprendre l'erreur avant d'agir", icon: "🔍", goto: 'logs1', flag: 'investigatedLogs' },
@@ -756,66 +1344,68 @@ const scenes = {
     time: 25,
     metrics: { errors: 92, latency: 2400, rps: 88, tickets: 23 },
     logs: [
-      { type: 'error', text: '16:24:31 ERROR records/index.js:142 - TypeError: Cannot read prop "doctorId" of null' },
-      { type: 'error', text: '16:24:35 ERROR records/permissions.js:78 - permission check returned null' },
-      { type: 'warn',  text: '16:24:38 WARN  module: records | commit: 7f3c19a8 by tvandekerkove' },
-      { type: 'info',  text: '16:24:42 INFO  rolling deployment id: dpl-29488 active since 16:05:12' }
+      { type: 'error', text: 'records/index.js:142 TypeError: Cannot read prop "doctorId" of null' },
+      { type: 'error', text: 'records/permissions.js:78 permission check returned null' },
+      { type: 'warn',  text: 'module: records | commit: 7f3c19a8 by tvandekerkove' },
+      { type: 'info',  text: 'rolling deployment id: dpl-29488 active since 16:05:12' }
     ],
     messages: [
-      { who: 'karim', ch: '#tech', text: "Je rentre tout juste de mon RDV. Je vois passer les alertes. C'est l'API qui renvoie du 500 sur /v1/records. Le worker tourne. Tu veux que je rollback ? Le rollback est cassé depuis avril, faut le faire à la main." }
+      { who: 'karim', ch: 'tech', text: "Je rentre tout juste de mon RDV. Je vois passer les alertes. C'est l'API qui renvoie du 500 sur /v1/records. Le worker tourne. Tu veux que je rollback ? Le rollback est cassé depuis avril, faut le faire à la main." }
     ],
     scenario: {
       title: "Les logs parlent",
-      text: "L'erreur vient du module records, commit 7f3c19a8 par Théo (tvandekerkove), il y a moins d'une heure. Le check de permissions retourne null. Karim est arrivé et vous prévient : le rollback automatique est cassé depuis avril.",
-      onEnter: () => { state.flags.permissionsBugFound = true; state.flags.karimAvailable = true; }
+      text: "L'erreur vient du module <strong>records</strong>, commit <code>7f3c19a8</code> par Théo Vandekerkove, déployé à 16:05. Le check de permissions retourne null. Karim est arrivé et vous prévient : le rollback automatique est cassé depuis l'incident SSO d'avril.",
+      hints: "Vous avez identifié la PR responsable. Karim est dispo mais le rollback auto ne marchera pas. Vous pouvez investiguer plus, lancer un rollback manuel guidé, ou désactiver temporairement l'endpoint."
     },
     actions: [
-      { label: "Identifier la PR de Théo et lire le code modifié", icon: "🔎", goto: 'identify_pr' },
-      { label: "Demander à Karim de tenter un rollback manuel guidé", icon: "⏮", goto: 'manual_rollback' },
+      { label: "Identifier la PR et lire le code modifié", icon: "🔎", goto: 'identify_pr' },
+      { label: "Demander à Karim un rollback manuel guidé", icon: "⏮", goto: 'manual_rollback' },
       { label: "Désactiver temporairement le endpoint /v1/records", icon: "⛔", goto: 'disable_endpoint' }
-    ]
+    ],
+    onEnter: () => { state.flags.permissionsBugFound = true; state.flags.karimAvailable = true; }
   },
 
   rollback_blind: {
     time: 25,
     metrics: { errors: 92, latency: 2400, rps: 88, tickets: 23 },
     logs: [
-      { type: 'info',  text: '16:23:10 INFO  rollback script invoked by lead' },
-      { type: 'error', text: '16:23:18 ERROR rollback.sh: previous image tag not found' },
-      { type: 'error', text: '16:23:19 ERROR rollback FAILED - manifest checksum mismatch' },
-      { type: 'warn',  text: '16:23:20 WARN  /v1/records still returning 5xx' }
+      { type: 'info',  text: 'rollback.sh invoked by lead@app-prod-01' },
+      { type: 'error', text: 'rollback.sh: previous image tag not found' },
+      { type: 'error', text: 'rollback FAILED - manifest checksum mismatch' },
+      { type: 'warn',  text: '/v1/records still returning 5xx' }
     ],
     messages: [
-      { who: 'karim', ch: '#tech', text: "Eh, tu sais que le rollback automatique est cassé depuis avril ? Je viens d'arriver. Faut le faire à la main, et il faut savoir vers quel tag remonter. T'as lancé le truc sans regarder ?" }
+      { who: 'karim', ch: 'tech', text: "Eh, tu sais que le rollback automatique est cassé depuis avril ? Je viens d'arriver. Faut le faire à la main, et il faut savoir vers quel tag remonter. T'as lancé le truc sans regarder ?" }
     ],
     scenario: {
       title: "Rollback raté",
       text: "Vous avez lancé le rollback sans avoir vérifié qu'il fonctionnait. Le script échoue : le tag de l'image précédente n'existe plus. Karim arrive et vous prévient (tardivement) que le rollback est cassé depuis l'incident SSO d'avril. Vous avez perdu 3 minutes.",
-      onEnter: () => { state.flags.rollbackAttempted = true; state.flags.rollbackFailed = true; state.flags.karimAvailable = true; }
+      hints: "Première leçon : un rollback automatique non testé ne se déclenche pas en aveugle. Reprendre l'investigation OU passer à une mitigation moins risquée."
     },
     actions: [
       { label: "Ouvrir les logs pour identifier la cause", icon: "🔍", goto: 'logs1', flag: 'investigatedLogs' },
       { label: "Désactiver le endpoint /v1/records en urgence", icon: "⛔", goto: 'disable_endpoint' },
-      { label: "Demander à Karim un rollback manuel pas à pas", icon: "⏮", goto: 'manual_rollback' }
-    ]
+      { label: "Demander à Karim un rollback manuel guidé", icon: "⏮", goto: 'manual_rollback' }
+    ],
+    onEnter: () => { state.flags.rollbackAttempted = true; state.flags.rollbackFailed = true; state.flags.karimAvailable = true; }
   },
 
   comm_early: {
     time: 24,
     metrics: { errors: 71, latency: 2100, rps: 89, tickets: 17 },
     logs: [
-      { type: 'error', text: '16:23:31 ERROR GET /v1/records/482401 - 500 Internal Server Error' },
-      { type: 'error', text: '16:23:35 ERROR GET /v1/records/482402 - 500 Internal Server Error' },
-      { type: 'error', text: '16:23:42 ERROR GET /v1/records/482403 - 500 Internal Server Error' }
+      { type: 'error', text: 'GET /v1/records/482401 - 500 Internal Server Error' },
+      { type: 'error', text: 'GET /v1/records/482402 - 500 Internal Server Error' },
+      { type: 'error', text: 'GET /v1/records/482403 - 500 Internal Server Error' }
     ],
     messages: [
-      { who: 'system', ch: '#tech', text: "Vous avez envoyé : 'On a un incident en cours sur le portail médecin, nos équipes regardent.'" },
-      { who: 'catherine', ch: '#exec', text: "Vous me dites quoi exactement ? 'Nos équipes regardent', je ne peux pas dire ça au DSI de Saint-Joseph. Il faut des faits, pas des intentions. Vous savez ce qui se passe ou pas ?" }
+      { who: 'lead', ch: 'exec', text: "On a un incident en cours sur le portail médecin, nos équipes regardent." },
+      { who: 'catherine', ch: 'exec', text: "Vous me dites quoi exactement ? 'Nos équipes regardent', je ne peux pas dire ça au DSI de Saint-Joseph. Il faut des faits, pas des intentions. Vous savez ce qui se passe ou pas ?" }
     ],
     scenario: {
       title: "Catherine vous recadre",
-      text: "Vous avez envoyé un message sans savoir ce qui se passait. Catherine vous interpelle directement : elle ne peut rien dire à Saint-Joseph avec 'nos équipes regardent'. Vous avez perdu 2 minutes et un peu de crédibilité. Reprenez l'investigation.",
-      onEnter: () => { state.flags.communicatedClients = false; }
+      text: "Vous avez envoyé un message sans savoir ce qui se passait. Catherine vous interpelle directement : elle ne peut rien dire à Saint-Joseph avec 'nos équipes regardent'. Vous avez perdu 2 minutes et un peu de crédibilité.",
+      hints: "Reprendre l'investigation. Un message client sans contenu factuel est pire que pas de message."
     },
     actions: [
       { label: "Ouvrir les logs pour comprendre l'erreur", icon: "🔍", goto: 'logs1', flag: 'investigatedLogs' },
@@ -827,15 +1417,16 @@ const scenes = {
     time: 24,
     metrics: { errors: 71, latency: 2100, rps: 89, tickets: 17 },
     logs: [
-      { type: 'error', text: '16:23:31 ERROR GET /v1/records/482401 - 500 Internal Server Error' },
-      { type: 'error', text: '16:23:35 ERROR GET /v1/records/482402 - 500 Internal Server Error' }
+      { type: 'error', text: 'GET /v1/records/482401 - 500 Internal Server Error' },
+      { type: 'error', text: 'GET /v1/records/482402 - 500 Internal Server Error' }
     ],
     messages: [
-      { who: 'karim', ch: '#tech', text: "Je suis en RDV chez le médecin pour ma fille. Je peux pas répondre au téléphone. Je rentre dans 15 minutes maximum. Tu peux te débrouiller avec Mehdi ? Si non, désactive le endpoint en attendant." }
+      { who: 'karim', ch: 'tech', text: "Je suis en RDV chez le médecin pour ma fille. Je peux pas répondre au téléphone. Je rentre dans 15 minutes maximum. Tu peux te débrouiller avec Mehdi ? Si non, désactive le endpoint en attendant." }
     ],
     scenario: {
       title: "Karim est en RDV familial",
-      text: "Karim vous explique par message qu'il est chez le médecin avec sa fille. Il ne peut pas répondre. Il revient dans 15 minutes maximum. En attendant, il suggère soit Mehdi (qui est en appel), soit désactiver le endpoint."
+      text: "Karim vous explique par message qu'il est chez le médecin avec sa fille. Il ne peut pas répondre au téléphone. Il revient dans 15 minutes maximum. En attendant, il suggère soit Mehdi (qui est en appel), soit désactiver le endpoint.",
+      hints: "Vous avez perdu 2 minutes à tenter de joindre Karim. Il est dispo via Slack mais pas immédiatement. À vous de continuer sans lui."
     },
     actions: [
       { label: "Ouvrir les logs et investiguer seul", icon: "🔍", goto: 'logs1', flag: 'investigatedLogs' },
@@ -848,189 +1439,197 @@ const scenes = {
     time: 39,
     metrics: { errors: 184, latency: 3200, rps: 76, tickets: 67 },
     logs: [
-      { type: 'error', text: '16:38:31 ERROR cascade failure - dependent services starting to fail' },
-      { type: 'warn',  text: '16:38:35 WARN  patient app retry storm detected' },
-      { type: 'error', text: '16:38:51 ERROR 5xx rate exceeded SLA threshold for 22 consecutive minutes' }
+      { type: 'error', text: 'cascade failure - dependent services starting to fail' },
+      { type: 'warn',  text: 'patient app retry storm detected' },
+      { type: 'error', text: '5xx rate exceeded SLA threshold for 22 consecutive minutes' }
     ],
     messages: [
-      { who: 'karim', ch: '#tech', text: "Je suis revenu. Mais 15 minutes pendant lesquelles tu n'as rien fait, c'est trop. On a un effet cascade. Le SLA Saint-Joseph est cassé. Penalty enclenchée." },
-      { who: 'catherine', ch: '#exec', text: "On a perdu 22 minutes sans rien faire ? Je vais devoir expliquer ça au DSI Saint-Joseph. C'est mauvais." }
+      { who: 'karim', ch: 'tech', text: "Je suis revenu. Mais 15 minutes pendant lesquelles tu n'as rien fait, c'est trop. On a un effet cascade. Le SLA Saint-Joseph est cassé. Penalty enclenchée." },
+      { who: 'catherine', ch: 'exec', text: "On a perdu 22 minutes sans rien faire ? Je vais devoir expliquer ça au DSI Saint-Joseph. C'est mauvais." }
     ],
     scenario: {
       title: "Attente passive : effet cascade",
       text: "Pendant que vous attendiez Karim, l'incident s'est aggravé. Les retries de l'app patient ont créé une cascade. Le SLA est cassé. Vous reprenez la main mais avec un coût important. Le verdict final sera dur.",
-      onEnter: () => { state.flags.karimAvailable = true; }
+      hints: "Attendre passivement n'est jamais une stratégie en incident. Continuer maintenant pour limiter les dégâts."
     },
     actions: [
       { label: "Désactiver le endpoint maintenant", icon: "⛔", goto: 'disable_endpoint' },
       { label: "Identifier la cause dans les logs", icon: "🔍", goto: 'identify_pr', flag: 'investigatedLogs' }
-    ]
+    ],
+    onEnter: () => { state.flags.karimAvailable = true; }
   },
 
   identify_pr: {
     time: 28,
     metrics: { errors: 118, latency: 2700, rps: 87, tickets: 31 },
     logs: [
-      { type: 'info',  text: '16:27:11 INFO  PR #2487 by tvandekerkove merged at 15:58 - "Refactor permissions check on records"' },
-      { type: 'warn',  text: '16:27:14 WARN  PR was approved by 1 reviewer (kthorenfeld) - no QA sign-off' },
-      { type: 'warn',  text: '16:27:18 WARN  E2E tests on records flow have been disabled in CI since 2025-04-15' },
-      { type: 'error', text: '16:27:22 ERROR diff suggests permissions filter no longer applied to doctor scope queries' }
+      { type: 'info',  text: 'PR #2487 by tvandekerkove merged at 15:58 - "Refactor permissions check on records"' },
+      { type: 'warn',  text: 'PR was approved by 1 reviewer (kthorenfeld) - no QA sign-off' },
+      { type: 'warn',  text: 'E2E tests on records flow have been disabled in CI since 2025-04-15' },
+      { type: 'error', text: 'diff suggests permissions filter no longer applied to doctor scope queries' }
     ],
     messages: [
-      { who: 'mehdi', ch: '#tech', text: "Je viens de raccrocher. Je vois passer. C'est la PR de Théo sur le module records, il a refacto la requête. Il a oublié de re-appliquer le filtre permissions médecin sur la nouvelle query. Confirmé : la query renvoie correctement mais le filtre est mort." },
-      { who: 'loubna', ch: '#tech', text: "Pour info, les tests E2E sur ce flow ont été désactivés en avril après l'incident SSO. Si on les avait laissés tourner, ça aurait été pris au build." }
+      { who: 'mehdi', ch: 'tech', text: "Je viens de raccrocher. Je vois passer. C'est la PR de Théo sur le module records, il a refacto la requête. Il a oublié de re-appliquer le filtre permissions médecin sur la nouvelle query. Confirmé : la query renvoie correctement mais le filtre est mort." },
+      { who: 'loubna', ch: 'tech', text: "Pour info, les tests E2E sur ce flow ont été désactivés en avril après l'incident SSO. Si on les avait laissés tourner, ça aurait été pris au build." }
     ],
     scenario: {
-      title: "Cause identifiée : permissions cassées",
+      title: "Cause identifiée",
       text: "Vous avez la cause précise. Théo a refacto la requête de records sans appliquer le filtre permissions médecin. Le test E2E qui aurait pu prendre ça a été désactivé il y a 4 mois. Mehdi est revenu et confirme.",
-      onEnter: () => { state.flags.mehdiAvailable = true; state.flags.e2eTestMentioned = true; }
+      hints: "3 options sur la table : un hotfix rapide, un rollback manuel guidé par Karim, ou désactiver le endpoint pendant que vous fixez tranquillement."
     },
     actions: [
       { label: "Hotfix : ré-appliquer le filtre permissions et déployer", icon: "🔧", goto: 'hotfix_attempt' },
       { label: "Rollback manuel guidé par Karim", icon: "⏮", goto: 'manual_rollback' },
       { label: "Désactiver le endpoint le temps de fixer proprement", icon: "⛔", goto: 'disable_endpoint' }
-    ]
+    ],
+    onEnter: () => { state.flags.mehdiAvailable = true; state.flags.e2eTestMentioned = true; }
   },
 
   manual_rollback: {
     time: 38,
     metrics: { errors: 12, latency: 580, rps: 82, tickets: 41 },
     logs: [
-      { type: 'info',  text: '16:30:11 INFO  Karim: identifying previous stable tag - dpl-29487' },
-      { type: 'info',  text: '16:32:48 INFO  pulling image registry/feedmyhealth-app:dpl-29487...' },
-      { type: 'info',  text: '16:35:12 INFO  rolling deployment to dpl-29487 initiated' },
-      { type: 'info',  text: '16:36:55 INFO  deployment complete' },
-      { type: 'success', text: '16:37:42 INFO  /v1/records - 200 OK 380ms (recovery confirmed)' }
+      { type: 'info',  text: 'Karim: identifying previous stable tag - dpl-29487' },
+      { type: 'info',  text: 'pulling image registry/feedmyhealth-app:dpl-29487...' },
+      { type: 'info',  text: 'rolling deployment to dpl-29487 initiated' },
+      { type: 'info',  text: 'deployment complete' },
+      { type: 'success', text: '/v1/records - 200 OK 380ms (recovery confirmed)' }
     ],
     messages: [
-      { who: 'karim', ch: '#tech', text: "Service rétabli à 16h37. On a perdu 20 minutes au total. Le SLA tient (juste). La cause reste à fixer dans le code, c'est juste un rollback. Théo devra refaire sa PR avec le filtre permissions cette fois." },
-      { who: 'catherine', ch: '#exec', text: "Bien joué. Je peux maintenant écrire à Saint-Joseph avec des faits. Je veux votre message client + un post-mortem express pour demain matin." }
+      { who: 'karim', ch: 'tech', text: "Service rétabli à 16h37. On a perdu 20 minutes au total. Le SLA tient (juste). La cause reste à fixer dans le code, c'est juste un rollback. Théo devra refaire sa PR avec le filtre permissions cette fois." },
+      { who: 'catherine', ch: 'exec', text: "Bien joué. Je peux maintenant écrire à Saint-Joseph avec des faits. Je veux votre message client + un post-mortem express pour demain matin." }
     ],
     scenario: {
       title: "Service rétabli par rollback manuel",
       text: "Karim et vous avez tenu un rollback manuel propre. Service rétabli à 16h37, 20 minutes après le début de l'incident. Le SLA tient. La cause reste à fixer dans le code mais le service est revenu.",
-      onEnter: () => { state.flags.rollbackAttempted = true; state.flags.rollbackFailed = false; }
+      hints: "Reste à communiquer aux clients et à amorcer le post-mortem."
     },
     actions: [
       { label: "Rédiger le message client + alerter Catherine", icon: "✉", goto: 'communicate_resolved' }
-    ]
+    ],
+    onEnter: () => { state.flags.rollbackAttempted = true; state.flags.rollbackFailed = false; }
   },
 
   hotfix_attempt: {
     time: 36,
     metrics: { errors: 6, latency: 520, rps: 88, tickets: 38 },
     logs: [
-      { type: 'info',  text: '16:31:11 INFO  PR #2491 by lead - "Hotfix: restore permission filter on records"' },
-      { type: 'info',  text: '16:33:48 INFO  CI pipeline running (E2E disabled, only unit tests)' },
-      { type: 'success', text: '16:34:12 INFO  build success, deploying...' },
-      { type: 'info',  text: '16:35:08 INFO  deployment to prod complete' },
-      { type: 'success', text: '16:35:42 INFO  /v1/records - 200 OK 390ms (recovery confirmed)' }
+      { type: 'info',  text: 'PR #2491 by lead - "Hotfix: restore permission filter on records"' },
+      { type: 'info',  text: 'CI pipeline running (E2E disabled, only unit tests)' },
+      { type: 'success', text: 'build success, deploying...' },
+      { type: 'info',  text: 'deployment to prod complete' },
+      { type: 'success', text: '/v1/records - 200 OK 390ms (recovery confirmed)' }
     ],
     messages: [
-      { who: 'mehdi', ch: '#tech', text: "Le hotfix tient. Mais on a déployé sans test E2E. Si on a oublié un autre filtre, on est nus. C'est la 2e fois aujourd'hui qu'on déploie aveugle. Faudra qu'on parle des E2E une fois la poussière retombée." },
-      { who: 'catherine', ch: '#exec', text: "Service rétabli ? Bien. Je veux votre message Saint-Joseph et un post-mortem demain. On parle de ce qui se passera la prochaine fois." }
+      { who: 'mehdi', ch: 'tech', text: "Le hotfix tient. Mais on a déployé sans test E2E. Si on a oublié un autre filtre, on est nus. C'est la 2e fois aujourd'hui qu'on déploie aveugle. Faudra qu'on parle des E2E une fois la poussière retombée." },
+      { who: 'catherine', ch: 'exec', text: "Service rétabli ? Bien. Je veux votre message Saint-Joseph et un post-mortem demain. On parle de ce qui se passera la prochaine fois." }
     ],
     scenario: {
       title: "Hotfix appliqué - mais à l'aveugle",
-      text: "Vous avez patché et déployé. Service rétabli à 16h35, 13 minutes après le début. Le filtre permissions est restauré. Mehdi pointe le vrai sujet : les tests E2E sont désactivés, vous avez déployé sans filet. Une victoire teintée d'une dette technique qui revient.",
-      onEnter: () => { state.flags.hotfixApplied = true; state.flags.mehdiAvailable = true; }
+      text: "Vous avez patché et déployé. Service rétabli à 16h35, 13 minutes après le début. Le filtre permissions est restauré. Mehdi pointe le vrai sujet : les tests E2E sont désactivés, vous avez déployé sans filet.",
+      hints: "Victoire teintée d'une dette technique qui revient. Communication + post-mortem à suivre."
     },
     actions: [
       { label: "Rédiger le message client + alerter Catherine", icon: "✉", goto: 'communicate_resolved' }
-    ]
+    ],
+    onEnter: () => { state.flags.hotfixApplied = true; state.flags.mehdiAvailable = true; }
   },
 
   disable_endpoint: {
     time: 32,
     metrics: { errors: 4, latency: 410, rps: 67, tickets: 52 },
     logs: [
-      { type: 'info',  text: '16:30:11 INFO  endpoint /v1/records disabled via feature toggle (manual)' },
-      { type: 'warn',  text: '16:30:14 WARN  doctor portal will return 503 Service Unavailable on records read' },
-      { type: 'success', text: '16:30:18 INFO  no more 500 errors on /v1/records (endpoint disabled)' },
-      { type: 'info',  text: '16:31:02 INFO  patient app: write path still functional' }
+      { type: 'info',  text: 'endpoint /v1/records disabled via feature toggle (manual)' },
+      { type: 'warn',  text: 'doctor portal will return 503 Service Unavailable on records read' },
+      { type: 'success', text: 'no more 500 errors on /v1/records (endpoint disabled)' },
+      { type: 'info',  text: 'patient app: write path still functional' }
     ],
     messages: [
-      { who: 'system', ch: '#tech', text: "Endpoint /v1/records désactivé. Les médecins reçoivent 503 quand ils essaient d'ouvrir un dossier. Les patients peuvent toujours écrire dans l'app. Vous avez stoppé l'hémorragie mais le service côté médecin est down." },
-      { who: 'julien', ch: '#tech-support', text: "OK je peux dire quelque chose aux clients maintenant. Je dis quoi exactement ? Service indisponible volontairement le temps de fixer ? Vous me donnez la formulation ?" }
+      { who: 'system', ch: 'tech', text: "Endpoint /v1/records désactivé. Les médecins reçoivent 503 quand ils essaient d'ouvrir un dossier. Les patients peuvent toujours écrire dans l'app." },
+      { who: 'julien', ch: 'tech-support', text: "OK je peux dire quelque chose aux clients maintenant. Je dis quoi exactement ? Service indisponible volontairement le temps de fixer ? Vous me donnez la formulation ?" }
     ],
     scenario: {
-      title: "Endpoint désactivé : on a stoppé l'hémorragie",
-      text: "Le /v1/records renvoie 503 maintenant. Les 500 ont disparu. Les médecins ne peuvent pas lire les dossiers, mais les patients peuvent toujours saisir. Vous avez du temps pour fixer proprement, mais le service médecin est officiellement down.",
-      onEnter: () => { state.flags.endpointDisabled = true; }
+      title: "Endpoint désactivé : hémorragie stoppée",
+      text: "Le /v1/records renvoie 503 maintenant. Les 500 ont disparu. Les médecins ne peuvent pas lire les dossiers, mais les patients peuvent toujours saisir. Vous avez du temps pour fixer proprement.",
+      hints: "Le service médecin est officiellement down. Communiquer rapidement aux médecins puis hotfix ou rollback."
     },
     actions: [
       { label: "Hotfix maintenant qu'on a du temps", icon: "🔧", goto: 'hotfix_attempt_safe' },
       { label: "Rollback manuel guidé par Karim", icon: "⏮", goto: 'manual_rollback' },
       { label: "Communiquer aux médecins d'abord", icon: "✉", goto: 'communicate_during' }
-    ]
+    ],
+    onEnter: () => { state.flags.endpointDisabled = true; }
   },
 
   hotfix_attempt_safe: {
     time: 42,
     metrics: { errors: 0, latency: 395, rps: 84, tickets: 58 },
     logs: [
-      { type: 'info',  text: '16:36:11 INFO  PR #2491 by lead - "Hotfix: restore permission filter on records"' },
-      { type: 'info',  text: '16:38:48 INFO  CI pipeline running on isolated branch' },
-      { type: 'success', text: '16:39:12 INFO  build success, deploying...' },
-      { type: 'info',  text: '16:40:08 INFO  endpoint re-enabled with new code' },
-      { type: 'success', text: '16:41:42 INFO  /v1/records - 200 OK 385ms (fully recovered)' }
+      { type: 'info',  text: 'PR #2491 by lead - "Hotfix: restore permission filter on records"' },
+      { type: 'info',  text: 'CI pipeline running on isolated branch' },
+      { type: 'success', text: 'build success, deploying...' },
+      { type: 'info',  text: 'endpoint re-enabled with new code' },
+      { type: 'success', text: '/v1/records - 200 OK 385ms (fully recovered)' }
     ],
     messages: [
-      { who: 'mehdi', ch: '#tech', text: "Service rétabli à 16h41. 20 minutes au total. Pas idéal mais sans cascade. La PR est propre, j'ai relu." },
-      { who: 'catherine', ch: '#exec', text: "OK service rétabli. Je veux votre message Saint-Joseph et un post-mortem demain. Bien d'avoir séparé la communication client de la résolution technique." }
+      { who: 'mehdi', ch: 'tech', text: "Service rétabli à 16h41. 20 minutes au total. Pas idéal mais sans cascade. La PR est propre, j'ai relu." },
+      { who: 'catherine', ch: 'exec', text: "OK service rétabli. Je veux votre message Saint-Joseph et un post-mortem demain. Bien d'avoir séparé la communication client de la résolution technique." }
     ],
     scenario: {
       title: "Service rétabli sans cascade",
-      text: "Endpoint désactivé puis fixé proprement. Service rétabli à 16h41, 20 minutes après le début. Pas de cascade. Mehdi a relu le hotfix avant déploiement. Catherine est satisfaite de la séparation entre communication client et résolution technique.",
-      onEnter: () => { state.flags.hotfixApplied = true; state.flags.mehdiAvailable = true; }
+      text: "Endpoint désactivé puis fixé proprement. Service rétabli à 16h41, 20 minutes après le début. Pas de cascade. Mehdi a relu le hotfix avant déploiement.",
+      hints: "Reste à communiquer la résolution."
     },
     actions: [
       { label: "Rédiger le message client + alerter Catherine", icon: "✉", goto: 'communicate_resolved' }
-    ]
+    ],
+    onEnter: () => { state.flags.hotfixApplied = true; state.flags.mehdiAvailable = true; }
   },
 
   communicate_during: {
     time: 34,
     metrics: { errors: 4, latency: 410, rps: 67, tickets: 41 },
     logs: [
-      { type: 'info', text: '16:32:11 INFO  outbound email batch: 1100 médecins notified' }
+      { type: 'info', text: 'outbound email batch: 1100 médecins notified' }
     ],
     messages: [
-      { who: 'system', ch: '#exec', text: "Votre message client : 'Bonjour, nous rencontrons un incident sur le portail médecin depuis 16h17. L'accès aux dossiers est temporairement désactivé pendant que nous corrigeons. Nous estimons une résolution sous 30 minutes. Le service patient n'est pas impacté. Nous reviendrons vers vous dès le retour à la normale.'" },
-      { who: 'catherine', ch: '#exec', text: "Bon message. Factuel, calme, avec une estimation. Saint-Joseph va comprendre. Continuez avec la résolution." }
+      { who: 'lead', ch: 'exec', text: "Bonjour, nous rencontrons un incident sur le portail médecin depuis 16h17. L'accès aux dossiers est temporairement désactivé pendant que nous corrigeons. Nous estimons une résolution sous 30 minutes. Le service patient n'est pas impacté." },
+      { who: 'catherine', ch: 'exec', text: "Bon message. Factuel, calme, avec une estimation. Saint-Joseph va comprendre. Continuez avec la résolution." }
     ],
     scenario: {
       title: "Médecins informés, on continue à fixer",
       text: "Le message client est parti. 1 100 médecins ont reçu un mail factuel et calme. Catherine valide. Maintenant il faut fixer le code.",
-      onEnter: () => { state.flags.communicatedClients = true; }
+      hints: "Reprendre la résolution technique."
     },
     actions: [
       { label: "Hotfix le filtre permissions", icon: "🔧", goto: 'hotfix_attempt_safe' },
       { label: "Rollback manuel avec Karim", icon: "⏮", goto: 'manual_rollback' }
-    ]
+    ],
+    onEnter: () => { state.flags.communicatedClients = true; }
   },
 
   communicate_resolved: {
     time: 45,
     metrics: { errors: 0, latency: 380, rps: 89, tickets: 58 },
     logs: [
-      { type: 'info', text: '16:42:11 INFO  outbound email batch: 1100 médecins notified - resolution confirmed' }
+      { type: 'info', text: 'outbound email batch: 1100 médecins notified - resolution confirmed' }
     ],
     messages: [
-      { who: 'system', ch: '#exec', text: "Votre message : 'L'incident survenu de 16h17 à 16h41 sur le portail médecin est résolu. La cause a été identifiée (régression sur les permissions, déploiement de 16h05) et corrigée. Nous transmettrons un post-mortem détaillé au DSI sous 24h. Toutes nos excuses pour la gêne.'" },
-      { who: 'catherine', ch: '#exec', text: "Parfait. Précis, sans excuse excessive, avec un engagement post-mortem. J'écris au DSI Saint-Joseph maintenant." },
-      { who: 'hadrien', ch: '#exec', text: "OK service rétabli. Je veux un point demain à 9h. Pourquoi ça s'est passé, ce qu'on fait pour pas que ça se reproduise, et combien ça nous coûte si Saint-Joseph râle." }
+      { who: 'lead', ch: 'exec', text: "L'incident survenu de 16h17 à 16h41 sur le portail médecin est résolu. La cause a été identifiée (régression sur les permissions, déploiement de 16h05) et corrigée. Nous transmettrons un post-mortem détaillé au DSI sous 24h. Toutes nos excuses pour la gêne." },
+      { who: 'catherine', ch: 'exec', text: "Parfait. Précis, sans excuse excessive, avec un engagement post-mortem. J'écris au DSI Saint-Joseph maintenant." },
+      { who: 'hadrien', ch: 'exec', text: "OK service rétabli. Je veux un point demain à 9h. Pourquoi ça s'est passé, ce qu'on fait pour pas que ça se reproduise, et combien ça nous coûte si Saint-Joseph râle." }
     ],
     scenario: {
-      title: "Post-incident : que retient-on ?",
+      title: "Post-incident : quelle est la cause RACINE ?",
       text: "Service rétabli. Message envoyé. Catherine relaie à Saint-Joseph. Hadrien veut un point demain. Avant le post-mortem détaillé, votre dernière décision : quelle est la cause RACINE de cet incident selon vous ?",
-      onEnter: () => { state.flags.communicatedClients = true; state.flags.catherineUpdated = true; }
+      hints: "Cette dernière question est la plus importante. C'est elle qui détermine si l'équipe apprendra ou se fermera."
     },
     actions: [
       { label: "L'erreur humaine de Théo (il a oublié le filtre)", icon: "👤", goto: 'final_blame' },
       { label: "Le système : PR sans review QA, tests E2E désactivés, rollback cassé, déploiement sans gate", icon: "🔧", goto: 'final_systemic' },
       { label: "Le manque de chance (ça aurait pu être n'importe qui)", icon: "🎲", goto: 'final_luck' }
-    ]
+    ],
+    onEnter: () => { state.flags.communicatedClients = true; state.flags.catherineUpdated = true; }
   },
 
   final_blame: {
@@ -1038,17 +1637,18 @@ const scenes = {
     metrics: { errors: 0, latency: 380, rps: 89, tickets: 58 },
     logs: [],
     messages: [
-      { who: 'mehdi', ch: '#tech', text: "Si tu mets ça sur Théo, je démissionne. C'est moi qui valide ses PR. C'est moi qui ai laissé E2E désactivé après avril. C'est moi qui n'ai pas redocumenté le rollback. Si tu veux blâmer quelqu'un, blâme-moi. Mais en vrai, c'est le système qui a craqué." }
+      { who: 'mehdi', ch: 'tech', text: "Si tu mets ça sur Théo, je démissionne. C'est moi qui valide ses PR. C'est moi qui ai laissé E2E désactivé après avril. C'est moi qui n'ai pas redocumenté le rollback. Si tu veux blâmer quelqu'un, blâme-moi. Mais en vrai, c'est le système qui a craqué." }
     ],
     scenario: {
       title: "Mehdi vous recadre",
       text: "Blâmer Théo, c'est ignorer 4 mois de signaux. Mehdi vous le dit cash. Vous avez votre réponse finale, ou vous reconsidérez ?",
-      onEnter: () => { state.outcome = 'blame'; }
+      hints: "Si vous maintenez, vous perdrez Mehdi mentalement. Si vous reformulez, vous gagnez en maturité."
     },
     actions: [
       { label: "Je maintiens : Théo est en faute", icon: "👤", goto: 'report' },
       { label: "Je reconsidère : c'est systémique", icon: "🔧", goto: 'final_systemic' }
-    ]
+    ],
+    onEnter: () => { state.outcome = 'blame'; }
   },
 
   final_systemic: {
@@ -1056,17 +1656,18 @@ const scenes = {
     metrics: { errors: 0, latency: 380, rps: 89, tickets: 58 },
     logs: [],
     messages: [
-      { who: 'mehdi', ch: '#tech', text: "Tu as raison. Les vraies causes : tests E2E désactivés en CI, PR mergée avec 1 review sans QA, rollback cassé depuis avril, déploiement à 16h sans gate. Aucune n'est Théo." },
-      { who: 'catherine', ch: '#exec', text: "C'est la bonne lecture. Donnez-moi un plan demain matin avec 3 actions correctrices qui adressent ces causes systémiques. Pas 10. 3." }
+      { who: 'mehdi', ch: 'tech', text: "Tu as raison. Les vraies causes : tests E2E désactivés en CI, PR mergée avec 1 review sans QA, rollback cassé depuis avril, déploiement à 16h sans gate. Aucune n'est Théo." },
+      { who: 'catherine', ch: 'exec', text: "C'est la bonne lecture. Donnez-moi un plan demain matin avec 3 actions correctrices qui adressent ces causes systémiques. Pas 10. 3." }
     ],
     scenario: {
       title: "Le système, pas la personne",
       text: "Vous avez vu juste. 4 causes systémiques étaient présentes avant Théo. Le plan demain matin se concentrera dessus. Catherine apprécie la maturité.",
-      onEnter: () => { state.outcome = 'systemic'; }
+      hints: "Vous pouvez maintenant générer le post-mortem complet."
     },
     actions: [
-      { label: "Voir le rapport final", icon: "📊", goto: 'report' }
-    ]
+      { label: "Générer le post-mortem", icon: "📊", goto: 'report' }
+    ],
+    onEnter: () => { state.outcome = 'systemic'; }
   },
 
   final_luck: {
@@ -1074,234 +1675,483 @@ const scenes = {
     metrics: { errors: 0, latency: 380, rps: 89, tickets: 58 },
     logs: [],
     messages: [
-      { who: 'catherine', ch: '#exec', text: "'Le manque de chance', sérieusement ? Si vous me sortez ça en COMEX demain, vous repartez avec un avertissement. Reformulez. C'est un système qui a craqué, ou c'est une erreur humaine. Choisissez." }
+      { who: 'catherine', ch: 'exec', text: "'Le manque de chance', sérieusement ? Si vous me sortez ça en COMEX demain, vous repartez avec un avertissement. Reformulez. C'est un système qui a craqué, ou c'est une erreur humaine. Choisissez." }
     ],
     scenario: {
       title: "Catherine vous attend au tournant",
       text: "'Le manque de chance' n'est pas une analyse, c'est une fuite. Catherine ne laissera pas passer. Reformulez.",
-      onEnter: () => { state.outcome = 'luck'; }
+      hints: "Choisissez : systémique (mature) ou erreur humaine (immature mais cohérent)."
     },
     actions: [
       { label: "C'est systémique : 4 causes étaient présentes", icon: "🔧", goto: 'final_systemic' },
       { label: "C'est Théo qui a fait l'erreur", icon: "👤", goto: 'final_blame' }
-    ]
+    ],
+    onEnter: () => { state.outcome = 'luck'; }
   }
-
 };
 
-// ===========================================================
-// Rendering helpers
-// ===========================================================
-function $(id) { return document.getElementById(id); }
+// ============================================================
+// CHANNEL META
+// ============================================================
+const channelMeta = {
+  'tech-support': { name: 'tech-support', topic: 'tickets clients et alertes support' },
+  'tech': { name: 'tech', topic: 'équipe technique, incidents, déploiements' },
+  'incidents': { name: 'incidents', topic: 'alertes monitoring, war room' },
+  'exec': { name: 'exec', topic: 'direction, COMEX, communications client critiques' },
+  'random': { name: 'random', topic: 'discussions hors-sujet' },
+  'general': { name: 'general', topic: 'annonces générales' }
+};
 
+const authorMeta = {
+  julien: { name: 'Julien Achouri', cls: 'julien', letter: 'JA' },
+  karim: { name: 'Karim Aliane', cls: 'karim', letter: 'KA' },
+  mehdi: { name: 'Mehdi Saidi', cls: 'mehdi', letter: 'MS' },
+  catherine: { name: 'Catherine Lefranc', cls: 'catherine', letter: 'CL' },
+  hadrien: { name: 'Hadrien Mortimer', cls: 'hadrien', letter: 'HM' },
+  loubna: { name: 'Loubna Ferreira', cls: 'loubna', letter: 'LF' },
+  theo: { name: 'Théo Vandekerkove', cls: 'theo', letter: 'TV' },
+  lead: { name: 'Vous (lead dev / CTO)', cls: 'lead', letter: 'YO' },
+  system: { name: 'console', cls: 'system', letter: 'sys' }
+};
+
+// ============================================================
+// UTILS
+// ============================================================
+function $(id) { return document.getElementById(id); }
 function clockStr(min) {
   const h = 16 + Math.floor(min / 60);
   const m = min % 60;
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
 }
-
 function updateClock() {
-  $('clock').textContent = clockStr(state.clockMinutes);
-  const elapsed = state.clockMinutes - 22;
-  $('elapsed').textContent = `T+${elapsed}`;
+  $('clockTime').textContent = clockStr(state.clockMinutes);
+  $('clockElapsed').textContent = `T+${state.clockMinutes - 22}`;
 }
 
-function updateMetrics(m) {
-  Object.assign(state.metrics, m);
-  $('val-errors').textContent = state.metrics.errors;
-  $('val-latency').textContent = `${state.metrics.latency} ms`;
-  $('val-rps').textContent = state.metrics.rps;
-  $('val-tickets').textContent = state.metrics.tickets;
+// ============================================================
+// BOOT SEQUENCE
+// ============================================================
+const bootLines = [
+  { text: '[ OK ] Connecting to FeedMyHealth Ops Console...', cls: 'ok' },
+  { text: '[ OK ] Authenticating session for lead@feedmyhealth.io', cls: 'ok' },
+  { text: '[ OK ] Loading Grafana dashboards', cls: 'ok' },
+  { text: '[WARN] PagerDuty integration: not configured', cls: 'warn' },
+  { text: '[ OK ] Loading Slack workspace: feedmyhealth.slack.com', cls: 'ok' },
+  { text: '[ OK ] Loading log streams from app-prod-01', cls: 'ok' },
+  { text: '[ERR ] /v1/records: 5xx threshold exceeded (auto-detected at 16:17:22)', cls: 'err' },
+  { text: '[ERR ] HighErrorRate alert FIRING for 5min', cls: 'err' },
+  { text: '[INFO] You are on-call. Console ready.', cls: 'ok' }
+];
 
-  // Color coding
-  setMetricStatus('errors', state.metrics.errors, [10, 50]);
-  setMetricStatus('latency', state.metrics.latency, [800, 1500]);
-  setMetricStatus('rps', state.metrics.rps, [60, 40], true); // lower is worse here
-  setMetricStatus('tickets', state.metrics.tickets, [10, 30]);
-
-  // Trends
-  setTrend('errors', state.metrics.errors);
-  setTrend('latency', state.metrics.latency);
-  setTrend('rps', state.metrics.rps);
-  setTrend('tickets', state.metrics.tickets);
-
-  drawChart();
-}
-
-function setMetricStatus(id, val, thresholds, lowerIsWorse=false) {
-  const metric = $('metric-' + id);
-  const value = $('val-' + id);
-  metric.classList.remove('warning', 'danger', 'healthy');
-  value.classList.remove('warning', 'danger', 'healthy');
-  let status;
-  if (lowerIsWorse) {
-    if (val < thresholds[1]) status = 'danger';
-    else if (val < thresholds[0]) status = 'warning';
-    else status = 'healthy';
-  } else {
-    if (val > thresholds[1]) status = 'danger';
-    else if (val > thresholds[0]) status = 'warning';
-    else status = 'healthy';
-  }
-  metric.classList.add(status);
-  value.classList.add(status);
-}
-
-function setTrend(id, val) {
-  const el = $('trend-' + id);
-  if (id === 'errors' || id === 'latency' || id === 'tickets') {
-    if (val > 50) el.textContent = '⬆ critique';
-    else if (val > 10) el.textContent = '⬆ en hausse';
-    else el.textContent = 'stable';
-  } else if (id === 'rps') {
-    if (val < 60) el.textContent = '⬇ trafic anormal';
-    else el.textContent = 'normal';
-  }
-}
-
-function drawChart() {
-  const chart = $('chart');
-  // Keep label
-  chart.innerHTML = '<span class="chart-label mono">5xx /min - 30 dernières minutes</span>';
-  // Generate ~30 bars from past low to current spike
-  const currentErr = state.metrics.errors;
-  for (let i = 0; i < 30; i++) {
-    const bar = document.createElement('div');
-    bar.className = 'chart-bar';
-    bar.style.left = `${(i * 3.33)}%`;
-    let val;
-    if (i < 17) {
-      val = 2 + Math.random() * 4; // baseline noise
-    } else {
-      const progress = (i - 17) / 13;
-      val = 2 + progress * Math.max(currentErr, 10);
-      bar.classList.add('spike');
-    }
-    const height = Math.min(100, (val / Math.max(currentErr, 30)) * 100);
-    bar.style.height = `${height}%`;
-    chart.appendChild(bar);
-  }
-}
-
-function addLogs(logs) {
-  const panel = $('logsPanel');
-  logs.forEach((log, i) => {
+let bootIdx = 0;
+function bootStep() {
+  if (bootIdx >= bootLines.length) {
     setTimeout(() => {
-      const line = document.createElement('div');
-      line.className = 'log-line ' + (log.type || 'info');
-      line.textContent = log.text;
-      panel.appendChild(line);
-      panel.scrollTop = panel.scrollHeight;
-    }, i * 250);
+      $('bootScreen').classList.add('boot-fade');
+      setTimeout(() => {
+        $('bootScreen').style.display = 'none';
+        $('app').style.display = 'grid';
+        renderScene('start');
+      }, 500);
+    }, 600);
+    return;
+  }
+  const line = bootLines[bootIdx];
+  const div = document.createElement('div');
+  div.className = 'boot-text';
+  div.innerHTML = `<span class="${line.cls}">${line.text.substring(0, 6)}</span>${line.text.substring(6)}`;
+  $('bootLog').appendChild(div);
+  bootIdx++;
+  setTimeout(bootStep, 180);
+}
+
+// ============================================================
+// VIEW NAVIGATION
+// ============================================================
+function switchView(viewName) {
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.classList.toggle('active', item.dataset.view === viewName);
   });
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  $('view-' + viewName).classList.add('active');
+
+  // Reset relevant badges
+  if (viewName === 'slack') {
+    Object.keys(state.unread).forEach(ch => {
+      if (ch === state.currentChannel) {
+        state.unread[ch] = 0;
+        updateChannelBadge(ch);
+      }
+    });
+    updateSlackBadge();
+  }
+  if (viewName === 'decision') {
+    $('badgeDecision').style.display = 'none';
+  }
+}
+
+document.querySelectorAll('.nav-item[data-view]').forEach(item => {
+  item.addEventListener('click', () => switchView(item.dataset.view));
+});
+
+// ============================================================
+// SLACK
+// ============================================================
+function switchChannel(channel) {
+  state.currentChannel = channel;
+  document.querySelectorAll('.channel-item[data-channel]').forEach(item => {
+    item.classList.toggle('active', item.dataset.channel === channel);
+  });
+  $('slackChanText').textContent = channelMeta[channel].name;
+  $('slackChanTopic').textContent = channelMeta[channel].topic;
+  state.unread[channel] = 0;
+  updateChannelBadge(channel);
+  updateSlackBadge();
+  renderChannel(channel);
+}
+
+document.querySelectorAll('.channel-item[data-channel]').forEach(item => {
+  item.addEventListener('click', () => {
+    const ch = item.dataset.channel;
+    if (channelMeta[ch]) switchChannel(ch);
+  });
+});
+
+function renderChannel(channel) {
+  const body = $('slackMessages');
+  body.innerHTML = '<div class="day-divider"><span>Aujourd\'hui</span></div>';
+  const msgs = state.messageStore[channel] || [];
+  msgs.forEach(msg => body.appendChild(buildMessage(msg)));
+  body.scrollTop = body.scrollHeight;
+}
+
+function buildMessage(msg) {
+  const author = authorMeta[msg.who] || authorMeta.system;
+  const el = document.createElement('div');
+  el.className = 'message';
+  el.innerHTML = `
+    <div class="avatar ${author.cls}">${author.letter}</div>
+    <div class="msg-body">
+      <div class="msg-header">
+        <span class="msg-author">${author.name}</span>
+        <span class="msg-time">${msg.time}</span>
+      </div>
+      <div class="msg-content">${msg.text}</div>
+    </div>
+  `;
+  return el;
 }
 
 function addMessages(messages) {
-  const panel = $('chatPanel');
   messages.forEach((msg, i) => {
     setTimeout(() => {
-      const el = document.createElement('div');
-      el.className = 'message';
-      const avatarLetter = msg.who.charAt(0).toUpperCase();
-      const authorName = ({
-        julien: 'Julien (Support)',
-        karim: 'Karim (Ops)',
-        mehdi: 'Mehdi (Senior)',
-        catherine: 'Catherine (COO)',
-        hadrien: 'Hadrien (CEO)',
-        loubna: 'Loubna (Senior)',
-        system: 'console'
-      })[msg.who] || msg.who;
-      el.innerHTML = `
-        <div class="avatar ${msg.who}">${avatarLetter}</div>
-        <div class="msg-body">
-          <div class="msg-header">
-            <span class="msg-author">${authorName}</span>
-            <span class="msg-channel">${msg.ch}</span>
-            <span class="msg-time">${clockStr(state.clockMinutes)}</span>
-          </div>
-          <div class="msg-content">${msg.text}</div>
-        </div>
-      `;
-      panel.appendChild(el);
-      panel.scrollTop = panel.scrollHeight;
-    }, i * 600);
+      const channel = msg.ch;
+      const msgWithTime = { ...msg, time: clockStr(state.clockMinutes) };
+      if (!state.messageStore[channel]) state.messageStore[channel] = [];
+      state.messageStore[channel].push(msgWithTime);
+      // If currently viewing this channel, append
+      if (state.currentChannel === channel && document.querySelector('#view-slack').classList.contains('active')) {
+        $('slackMessages').appendChild(buildMessage(msgWithTime));
+        $('slackMessages').scrollTop = $('slackMessages').scrollHeight;
+      } else {
+        // Increment unread
+        state.unread[channel] = (state.unread[channel] || 0) + 1;
+        updateChannelBadge(channel);
+        updateSlackBadge();
+        // Toast
+        showToast(authorMeta[msg.who].name, msg.text.substring(0, 80) + (msg.text.length > 80 ? '...' : ''), 'info');
+      }
+    }, i * 700);
   });
 }
 
+function updateChannelBadge(channel) {
+  const el = $('cnt-' + channel);
+  if (!el) return;
+  const count = state.unread[channel] || 0;
+  if (count > 0) {
+    el.textContent = count;
+    el.style.display = 'inline';
+    // Add unread class
+    const item = document.querySelector(`.channel-item[data-channel="${channel}"]`);
+    if (item) item.classList.add('unread');
+  } else {
+    el.style.display = 'none';
+    const item = document.querySelector(`.channel-item[data-channel="${channel}"]`);
+    if (item) item.classList.remove('unread');
+  }
+}
+
+function updateSlackBadge() {
+  const total = Object.values(state.unread).reduce((a, b) => a + b, 0);
+  const el = $('badgeSlack');
+  if (total > 0) { el.textContent = total; el.style.display = 'inline-block'; }
+  else { el.style.display = 'none'; }
+}
+
+// ============================================================
+// LOGS
+// ============================================================
+function addLogs(logs) {
+  logs.forEach((log, i) => {
+    setTimeout(() => {
+      state.logLineCount++;
+      const div = document.createElement('div');
+      div.className = 'log-line ' + (log.type || 'info');
+      div.dataset.level = log.type;
+      const lvl = (log.type || 'info').toUpperCase();
+      div.innerHTML = `
+        <span class="ln">${String(state.logLineCount).padStart(4, '0')}</span>
+        <span class="ts">${clockStr(state.clockMinutes)}:${String(Math.floor(Math.random()*60)).padStart(2,'0')}</span>
+        <span class="lvl">${lvl}</span>
+        <span class="msg">${log.text}</span>
+      `;
+      applyLogFilter(div);
+      $('logsBody').appendChild(div);
+      $('logsBody').scrollTop = $('logsBody').scrollHeight;
+    }, i * 200);
+  });
+}
+
+function applyLogFilter(line) {
+  const filter = state.logFilter;
+  if (filter === 'all') line.style.display = '';
+  else line.style.display = (line.dataset.level === filter) ? '' : 'none';
+}
+
+document.querySelectorAll('.log-filter').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.log-filter').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.logFilter = btn.dataset.filter;
+    document.querySelectorAll('#logsBody .log-line').forEach(applyLogFilter);
+  });
+});
+
+// ============================================================
+// METRICS / DASHBOARD
+// ============================================================
+function updateMetrics(m) {
+  Object.assign(state.metrics, m);
+  $('v-errors').textContent = state.metrics.errors;
+  $('v-latency').textContent = state.metrics.latency;
+  $('v-rps').textContent = state.metrics.rps;
+  $('v-tickets').textContent = state.metrics.tickets;
+
+  // Status of metric cards
+  setMetricLevel('errors', state.metrics.errors, [10, 50]);
+  setMetricLevel('latency', state.metrics.latency, [800, 1500]);
+  setMetricLevel('rps', state.metrics.rps, [60, 40], true);
+  setMetricLevel('tickets', state.metrics.tickets, [10, 30]);
+
+  // Trends
+  setTrend('errors', state.metrics.errors > 10 ? `⬆ +${state.metrics.errors - 2} vs baseline` : '— stable', state.metrics.errors > 10);
+  setTrend('latency', state.metrics.latency > 800 ? `⬆ +${Math.round((state.metrics.latency / 420 - 1) * 100)}% vs baseline` : '— stable', state.metrics.latency > 800);
+  setTrend('rps', state.metrics.rps < 60 ? `⬇ ${Math.round((1 - state.metrics.rps / 91) * 100)}% sous baseline` : '— normal', state.metrics.rps < 60);
+  setTrend('tickets', state.metrics.tickets > 10 ? `⬆ +${state.metrics.tickets} vs baseline` : '— stable', state.metrics.tickets > 10);
+
+  drawSparklines();
+  drawBigChart();
+  updateServiceStatuses();
+}
+
+function setMetricLevel(id, val, thresholds, lowerIsWorse) {
+  const card = $('m-' + id);
+  card.classList.remove('healthy', 'warning', 'danger');
+  let level;
+  if (lowerIsWorse) {
+    level = val < thresholds[1] ? 'danger' : (val < thresholds[0] ? 'warning' : 'healthy');
+  } else {
+    level = val > thresholds[1] ? 'danger' : (val > thresholds[0] ? 'warning' : 'healthy');
+  }
+  card.classList.add(level);
+}
+function setTrend(id, text, up) {
+  const el = $('t-' + id);
+  el.textContent = text;
+  el.classList.toggle('up', up);
+  el.classList.toggle('down', !up && text.startsWith('⬇'));
+}
+
+function drawSparklines() {
+  ['errors', 'latency', 'rps', 'tickets'].forEach(id => {
+    const container = $('spark-' + id);
+    container.innerHTML = '';
+    const current = state.metrics[id];
+    let baseline = id === 'errors' ? 2 : id === 'latency' ? 420 : id === 'rps' ? 87 : 1;
+    let isWorse = (id === 'rps') ? current < 60 : current > baseline * 2;
+    for (let i = 0; i < 15; i++) {
+      const bar = document.createElement('div');
+      bar.className = 'spark-bar';
+      let val;
+      if (i < 9) val = baseline + (Math.random() * baseline * 0.3);
+      else {
+        const progress = (i - 9) / 6;
+        val = baseline + progress * (current - baseline);
+        if (isWorse) bar.classList.add('spike');
+      }
+      const max = Math.max(current, baseline * 1.2);
+      bar.style.height = Math.max(2, (val / max) * 100) + '%';
+      container.appendChild(bar);
+    }
+  });
+}
+
+function drawBigChart() {
+  const container = $('bigChart');
+  container.innerHTML = '';
+  const current = state.metrics.errors;
+  const baseline = 2;
+  const max = Math.max(current * 1.1, baseline * 5);
+  for (let i = 0; i < 60; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'chart-bar-large';
+    let val;
+    if (i < 35) val = baseline + Math.random() * baseline;
+    else {
+      const progress = (i - 35) / 25;
+      val = baseline + progress * current;
+      if (val > baseline * 3) bar.classList.add('spike');
+      else if (val > baseline * 1.5) bar.classList.add('warn');
+    }
+    bar.style.height = Math.max(2, (val / max) * 100) + '%';
+    container.appendChild(bar);
+  }
+}
+
+function updateServiceStatuses() {
+  const errors = state.metrics.errors;
+  // api
+  $('svc-api').className = 'service-status ' + (errors > 50 ? 'critical' : errors > 10 ? 'warning' : '');
+  $('svc-portal').className = 'service-status ' + (errors > 30 ? 'critical' : errors > 5 ? 'warning' : '');
+  $('svc-mobile').className = 'service-status ' + (state.metrics.rps < 50 ? 'warning' : '');
+
+  // Update top bar status
+  if (errors > 50) {
+    $('topStatus').textContent = 'CRITICAL';
+    $('topStatus').className = 'status-pill';
+    $('topDot').className = 'logo-dot';
+  } else if (errors > 5) {
+    $('topStatus').textContent = 'INCIDENT EN COURS';
+    $('topStatus').className = 'status-pill';
+    $('topDot').className = 'logo-dot';
+  } else {
+    $('topStatus').textContent = 'NOMINAL';
+    $('topStatus').className = 'status-pill healthy';
+    $('topDot').className = 'logo-dot healthy';
+  }
+}
+
+// ============================================================
+// DECISION RENDERING
+// ============================================================
 function renderScene(sceneId) {
   const scene = scenes[sceneId];
   if (!scene) return;
   state.scene = sceneId;
   state.clockMinutes = scene.time;
   updateClock();
-  $('sceneId').textContent = sceneId;
+  $('sceneIdLabel').textContent = sceneId;
 
   if (scene.onEnter) scene.onEnter();
   if (scene.metrics) updateMetrics(scene.metrics);
   if (scene.logs && scene.logs.length) addLogs(scene.logs);
   if (scene.messages && scene.messages.length) addMessages(scene.messages);
 
-  // Scenario
-  if (scene.scenario) {
-    $('scenarioPanel').innerHTML = `<h3>${scene.scenario.title}</h3><p>${scene.scenario.text}</p>`;
-  } else {
-    $('scenarioPanel').innerHTML = '';
-  }
+  // Render the decision card
+  const body = $('decisionBody');
+  body.innerHTML = `
+    <div class="decision-alert">Décision requise</div>
+    <div class="decision-card">
+      <div class="decision-title">${scene.scenario.title}</div>
+      <div class="decision-context">${scene.scenario.text}</div>
+      ${scene.scenario.hints ? `<div class="context-hints"><strong>Indices</strong>${scene.scenario.hints}</div>` : ''}
+    </div>
+    <div class="actions-section">
+      <div class="actions-title">Actions possibles · choisissez-en une</div>
+      <div id="actionsContainer"></div>
+    </div>
+  `;
 
-  // Actions
-  const actionsPanel = $('actionsPanel');
-  actionsPanel.innerHTML = '';
-  if (scene.actions && scene.actions.length) {
-    scene.actions.forEach(action => {
-      const btn = document.createElement('button');
-      btn.className = 'action-btn';
-      btn.innerHTML = `
-        <span class="icon">${action.icon || '→'}</span>
-        <span class="label">${action.label}</span>
-      `;
-      btn.onclick = () => {
-        if (action.flag) state.flags[action.flag] = true;
-        addDecision(action.label);
-        if (action.goto === 'report') {
-          showReport();
-        } else {
-          renderScene(action.goto);
-        }
-      };
-      actionsPanel.appendChild(btn);
-    });
+  const cont = $('actionsContainer');
+  scene.actions.forEach(action => {
+    const btn = document.createElement('button');
+    btn.className = 'action-btn';
+    btn.innerHTML = `
+      <span class="action-icon">${action.icon || '→'}</span>
+      <span>${action.label}</span>
+    `;
+    btn.onclick = () => {
+      if (action.flag) state.flags[action.flag] = true;
+      addDecision(action.label);
+      if (action.goto === 'report') showReport();
+      else renderScene(action.goto);
+    };
+    cont.appendChild(btn);
+  });
+
+  // Show pulsing badge on Decision nav
+  $('badgeDecision').style.display = 'inline-block';
+
+  // If we're not on decision view, show a toast
+  if (!$('view-decision').classList.contains('active')) {
+    showToast('Nouvelle décision', scene.scenario.title, 'warn');
   }
 }
 
 function addDecision(text) {
   state.decisions.push({ time: clockStr(state.clockMinutes), text });
-  const log = $('decisionLog');
-  if (state.decisions.length === 1) log.innerHTML = '';
-  const item = document.createElement('div');
-  item.className = 'decision-item';
-  item.innerHTML = `
-    <span class="decision-time">${clockStr(state.clockMinutes)}</span>
-    <span class="decision-text">${text}</span>
-  `;
-  log.appendChild(item);
+  renderJournal();
+  // Update journal badge
+  $('badgeJournal').textContent = state.decisions.length;
+  $('badgeJournal').className = 'nav-badge cyan';
 }
 
-// ===========================================================
-// Final report
-// ===========================================================
+function renderJournal() {
+  const empty = $('journalEmpty');
+  const timeline = $('journalTimeline');
+  if (state.decisions.length === 0) {
+    empty.style.display = 'block';
+    timeline.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  timeline.style.display = 'block';
+  timeline.innerHTML = state.decisions.map(d => `
+    <div class="timeline-item">
+      <div class="timeline-time">${d.time}</div>
+      <div class="timeline-action">${d.text}</div>
+    </div>
+  `).join('');
+  $('journalCount').textContent = `${state.decisions.length} décision${state.decisions.length > 1 ? 's' : ''}`;
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(title, text, type) {
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + (type || 'info');
+  toast.innerHTML = `
+    <div class="toast-title ${type || 'info'}">${title}</div>
+    <div class="toast-text">${text}</div>
+  `;
+  $('toastContainer').appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+// ============================================================
+// REPORT
+// ============================================================
 function showReport() {
-  $('simulationScreen').classList.remove('active');
-  const report = $('reportScreen');
-  report.classList.add('active');
-  $('modeLabel').textContent = 'POST-MORTEM';
+  $('app').style.display = 'none';
+  $('reportScreen').classList.add('active');
 
-  // Compute scores
-  let commScore = 60;
-  let techScore = 60;
-  let leadScore = 60;
-
-  // Decision-based adjustments
+  let techScore = 60, commScore = 60, leadScore = 60;
   if (state.flags.investigatedLogs) techScore += 15;
   if (state.flags.rollbackFailed) techScore -= 15;
   if (state.flags.permissionsBugFound) techScore += 10;
@@ -1310,23 +2160,22 @@ function showReport() {
   if (state.flags.communicatedClients) commScore += 20;
   if (state.flags.catherineUpdated) commScore += 10;
 
-  // Outcome-based
   let outcomeLabel, outcomeClass, outcomeMsg;
   switch (state.outcome) {
     case 'systemic':
-      outcomeLabel = 'Lecture systémique';
+      outcomeLabel = 'Lecture systémique - post-mortem mature';
       outcomeClass = 'good';
-      outcomeMsg = "Vous avez identifié les 4 causes systémiques. C'est une lecture mature, alignée avec une culture de post-mortem sans blâme. Catherine vous fait confiance pour le COMEX de demain.";
+      outcomeMsg = "Vous avez identifié les 4 causes systémiques. C'est une lecture alignée avec une culture de post-mortem sans blâme. Catherine vous fait confiance pour le COMEX de demain.";
       leadScore += 25;
       break;
     case 'blame':
       outcomeLabel = 'Vous avez blâmé Théo';
       outcomeClass = 'bad';
-      outcomeMsg = "Vous avez nommé Théo comme cause. Mehdi a démissionné mentalement de votre leadership. L'équipe se ferme. La culture qualité que vous espériez instaurer vient de prendre 6 mois de retard.";
+      outcomeMsg = "Mehdi a démissionné mentalement de votre leadership. L'équipe se ferme. La culture qualité que vous espériez instaurer vient de prendre 6 mois de retard.";
       leadScore -= 30;
       break;
     case 'luck':
-      outcomeLabel = 'Vous avez parlé de "manque de chance"';
+      outcomeLabel = '"Manque de chance" - analyse insuffisante';
       outcomeClass = 'bad';
       outcomeMsg = "Catherine ne tolère pas l'absence d'analyse. Votre crédibilité en COMEX est compromise.";
       leadScore -= 35;
@@ -1334,7 +2183,7 @@ function showReport() {
     default:
       outcomeLabel = 'Incident résolu mais sans post-mortem';
       outcomeClass = 'medium';
-      outcomeMsg = "Vous avez stabilisé le service mais le post-mortem n'a pas été conduit. Les causes restent ouvertes. Risque de récidive.";
+      outcomeMsg = "Vous avez stabilisé le service mais le post-mortem n'a pas été conduit. Risque de récidive.";
       leadScore -= 10;
   }
 
@@ -1343,78 +2192,80 @@ function showReport() {
   leadScore = Math.max(0, Math.min(100, leadScore));
   const overall = Math.round((commScore + techScore + leadScore) / 3);
 
-  // Build report
-  let html = `
-    <h2>Post-mortem de l'incident</h2>
-    <div class="outcome-banner ${outcomeClass}">
-      <h3>${outcomeLabel}</h3>
-      <p>${outcomeMsg}</p>
-    </div>
+  $('reportScreen').innerHTML = `
+    <div class="report-content">
+      <div class="report-header">
+        <h2>Post-mortem de l'incident</h2>
+        <div class="timestamp">généré à ${clockStr(state.clockMinutes)} · durée totale ${state.clockMinutes - 17} min</div>
+      </div>
 
-    <div class="report-section">
-      <h3>Score global : ${overall} / 100</h3>
-      <div class="scores">
-        <div class="score-card">
-          <div class="score-value">${techScore}</div>
-          <div class="score-label">Technique</div>
-        </div>
-        <div class="score-card">
-          <div class="score-value">${commScore}</div>
-          <div class="score-label">Communication</div>
-        </div>
-        <div class="score-card">
-          <div class="score-value">${leadScore}</div>
-          <div class="score-label">Leadership</div>
+      <div class="outcome-banner ${outcomeClass}">
+        <h3>${outcomeLabel}</h3>
+        <p>${outcomeMsg}</p>
+      </div>
+
+      <div class="report-section">
+        <h3>Score global · ${overall} / 100</h3>
+        <div class="scores-grid">
+          <div class="score-card tech">
+            <div class="score-value">${techScore}</div>
+            <div class="score-label">Technique</div>
+          </div>
+          <div class="score-card comm">
+            <div class="score-value">${commScore}</div>
+            <div class="score-label">Communication</div>
+          </div>
+          <div class="score-card lead">
+            <div class="score-value">${leadScore}</div>
+            <div class="score-label">Leadership</div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="report-section">
-      <h3>Vos décisions, dans l'ordre</h3>
-      <ul>
-        ${state.decisions.map(d => `<li><strong>${d.time}</strong> - ${d.text}</li>`).join('')}
-      </ul>
-    </div>
+      <div class="report-section">
+        <h3>Vos décisions · timeline</h3>
+        <ul>
+          ${state.decisions.map(d => `<li><strong>${d.time}</strong> · ${d.text}</li>`).join('')}
+        </ul>
+      </div>
 
-    <div class="report-section">
-      <h3>Les 4 causes racines de cet incident</h3>
-      <ul>
-        <li><strong>Tests E2E désactivés en CI</strong> depuis avril (suite à l'incident SSO, jamais ré-activés). Si actifs, le bug aurait été détecté au build.</li>
-        <li><strong>PR mergée avec 1 seul reviewer</strong> sur un module critique (records), sans validation QA.</li>
-        <li><strong>Déploiement automatique sans gate</strong> : merge sur main = production immédiate.</li>
-        <li><strong>Rollback automatique cassé</strong> depuis avril, jamais réparé. Le post-mortem SSO listait cette action, jamais exécutée.</li>
-      </ul>
-      <p style="margin-top: 12px; color: var(--text-secondary);">
-        <strong>Ces 4 causes étaient TOUTES présentes dans le dossier d'onboarding distribué lundi matin.</strong> Section coverage, section politique de release, section post-mortem SSO. Les groupes qui les ont vues hier dans la cartographie peuvent maintenant les adresser dans leur roadmap. Les autres viennent de les découvrir dans la douleur.
-      </p>
-    </div>
+      <div class="report-section">
+        <h3>Les 4 causes racines de cet incident</h3>
+        <ul>
+          <li><strong>Tests E2E désactivés en CI</strong> depuis avril (suite à l'incident SSO, jamais ré-activés). Si actifs, le bug aurait été détecté au build.</li>
+          <li><strong>PR mergée avec 1 seul reviewer</strong> sur un module critique (records), sans validation QA.</li>
+          <li><strong>Déploiement automatique sans gate</strong> : merge sur main = production immédiate.</li>
+          <li><strong>Rollback automatique cassé</strong> depuis avril, jamais réparé. Le post-mortem SSO listait cette action, jamais exécutée.</li>
+        </ul>
+        <p style="margin-top: 14px; color: var(--text-secondary); font-size: 13.5px;">
+          <strong style="color: var(--accent-amber);">Ces 4 causes étaient TOUTES présentes dans le dossier d'onboarding distribué lundi matin.</strong> Section coverage, section politique de release, section post-mortem SSO. Les groupes qui les ont vues hier dans la cartographie peuvent maintenant les adresser dans leur roadmap. Les autres viennent de les découvrir dans la douleur.
+        </p>
+      </div>
 
-    <div class="report-section">
-      <h3>Ce qu'on retient pour le plan qualité</h3>
-      <ul>
-        <li>Réactiver les tests E2E sur les modules critiques (records, prescriptions, payments).</li>
-        <li>Instituer une revue de PR à 2 personnes sur ces 3 modules.</li>
-        <li>Réparer le mécanisme de rollback (action listée et oubliée depuis avril).</li>
-        <li>Fenêtre de release : pas de déploiement après 15h, jamais le vendredi.</li>
-        <li>Post-mortem sans blâme à instaurer : la cause systémique, jamais la personne.</li>
-      </ul>
-    </div>
+      <div class="report-section">
+        <h3>Pour le plan qualité</h3>
+        <ul>
+          <li>Réactiver les tests E2E sur les modules critiques (records, prescriptions, payments).</li>
+          <li>Instituer une revue de PR à 2 personnes sur ces 3 modules.</li>
+          <li>Réparer le mécanisme de rollback (action listée et oubliée depuis avril).</li>
+          <li>Fenêtre de release : pas de déploiement après 15h, jamais le vendredi.</li>
+          <li>Post-mortem sans blâme à instaurer : la cause systémique, jamais la personne.</li>
+        </ul>
+      </div>
 
-    <button class="restart-btn" onclick="location.reload()">Recommencer l'incident</button>
+      <button class="restart-btn" onclick="location.reload()">Refaire l'incident</button>
+    </div>
   `;
-  report.innerHTML = html;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ===========================================================
-// Boot
-// ===========================================================
-function startSimulation() {
-  $('introScreen').style.display = 'none';
-  $('simulationScreen').classList.add('active');
-  $('modeLabel').textContent = 'INCIDENT EN COURS';
-  renderScene('start');
-}
+// ============================================================
+// BOOT
+// ============================================================
+window.addEventListener('load', () => {
+  // Inject initial alerts as messages in tech-support history so they're visible
+  setTimeout(bootStep, 300);
+});
 </script>
 
 </body>

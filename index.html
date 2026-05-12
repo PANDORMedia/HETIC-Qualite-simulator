@@ -2078,6 +2078,9 @@ const authorMeta = {
   hadrien: { name: 'Hadrien Mortimer', cls: 'hadrien', letter: 'HM' },
   loubna: { name: 'Loubna Ferreira', cls: 'loubna', letter: 'LF' },
   theo: { name: 'Théo Vandekerkove', cls: 'theo', letter: 'TV' },
+  sarah: { name: 'Sarah Benoit', cls: 'loubna', letter: 'SB' },
+  antoine: { name: 'Antoine Marchais', cls: 'mehdi', letter: 'AM' },
+  manon: { name: 'Manon Roselli', cls: 'julien', letter: 'MR' },
   lead: { name: 'Vous (lead dev / CTO)', cls: 'lead', letter: 'YO' },
   system: { name: 'console', cls: 'system', letter: 'sys' }
 };
@@ -2654,42 +2657,176 @@ function showReport() {
 }
 
 // ============================================================
-// BACKGROUND NOISE (Slack #random and #general)
+// CHANNEL HISTORY - messages préchargés par channel (avant l'incident)
+// ============================================================
+const channelHistory = {
+  'tech-support': [
+    { who: 'julien', time: '08:42', text: "Bonjour à tous. Stats du jour : 23 tickets fermés hier, 14 ouverts ce matin. TOP issue : FMH-525 (PDF ordonnance avec mention TEST), revenu 4 fois hier." },
+    { who: 'manon', time: '09:15', text: "Saint-Joseph m'a envoyé un mail pour l'export FHIR de réversibilité. Je leur ai dit qu'on était dans les clous, mais on a quoi exactement en termes de FHIR aujourd'hui ?" },
+    { who: 'julien', time: '11:30', text: "Le Dr Verrière vient de m'appeler pour FMH-525 (encore). Il m'a dit que si ça reste comme ça il rend son compte. Je lui ai promis une correction sous la semaine. 🙄 ça fait 11 semaines que je promets ça." },
+    { who: 'mehdi', time: '13:48', text: "FMH-525 est dans la sprint planning de la semaine prochaine. Promis cette fois." },
+    { who: 'julien', time: '13:52', text: "👍 (mais oui c'est ça)" },
+    { who: 'system', time: '14:30', text: "🤖 status-bot : 4 incidents ouverts depuis > 30 jours sur le board. Voir tableau dans Notion." }
+  ],
+  'tech': [
+    { who: 'mehdi', time: '08:30', text: "Bonjour. Rappel : pas de merge sur main avant 14h aujourd'hui, Karim doit faire une maintenance Postgres entre 12h30 et 13h30." },
+    { who: 'karim', time: '08:32', text: "👍 Maintenance Postgres effectivement entre 12h30 et 13h30. Pas de panique si vous voyez des connections drop pendant 90 sec." },
+    { who: 'loubna', time: '10:15', text: "Quelqu'un sait pourquoi `kids-onboarding` est toujours dans le repo ? Je vois passer du build TS dessus à chaque CI, ça ajoute 40 sec." },
+    { who: 'mehdi', time: '10:18', text: "Ouais on devait supprimer. Y'a une PR ouverte depuis 4 mois. Personne ne la finit, conflit de merge dégueulasse." },
+    { who: 'theo', time: '10:22', text: "💀 Je peux essayer de la reprendre cette semaine si vous voulez." },
+    { who: 'karim', time: '11:45', text: "Les tests E2E sur le flow médecin sont toujours désactivés en CI depuis avril, c'est noté quelque part qu'on doit les remettre ?" },
+    { who: 'mehdi', time: '11:47', text: "Théoriquement oui, dans le post-mortem SSO d'avril. En pratique : non, jamais fait. Je l'ai oublié." },
+    { who: 'system', time: '12:35', text: "🤖 deployment-bot : maintenance Postgres en cours (Karim). ETA fin : 13:30." },
+    { who: 'system', time: '13:28', text: "🤖 deployment-bot : maintenance Postgres terminée. Service nominal." },
+    { who: 'sarah', time: '14:50', text: "J'ai une question peut-être bête : c'est quoi la différence entre la branche develop et main au juste ? J'ai vu Mehdi dire qu'il rebase sur main direct mais j'ose pas." },
+    { who: 'loubna', time: '14:55', text: "@sarah pas bête du tout. develop n'est plus mergée sur main depuis 6 semaines. Officiellement on utilise develop, en pratique tout le monde fait des PR direct sur main. C'est le bordel, faut qu'on règle ça." },
+    { who: 'theo', time: '15:54', text: "PR #2487 prête pour review. Petit refacto du module records pour optimiser la query findByDoctor. Tests unitaires verts. Loubna ça t'intéresse ?" },
+    { who: 'mehdi', time: '15:56', text: "Je peux relire. Mais vite, j'ai un call à 16h. Tu as testé sur le flow médecin ?" },
+    { who: 'theo', time: '15:57', text: "Local oui. E2E pas possible, désactivés en CI 🤷‍♂️" },
+    { who: 'mehdi', time: '15:58', text: "Approved. On verra à l'usage. Merge si tu veux." },
+    { who: 'theo', time: '15:58', text: "Merged 🚀" }
+  ],
+  'incidents': [
+    { who: 'system', time: '2025-04-14 09:01', text: "🚨 ALERT firing: SSOAuthFailure on /auth/saml/callback (severity P1)" },
+    { who: 'mehdi', time: '2025-04-14 09:22', text: "Investigating. Lib SAML mise à jour hier 18h, env var supprimée par erreur." },
+    { who: 'mehdi', time: '2025-04-14 11:28', text: "Service rétabli à 11:28. 2h41 d'indisponibilité. Post-mortem à venir." },
+    { who: 'mehdi', time: '2025-04-20 16:12', text: "Post-mortem SSO d'avril publié sur Notion. 5 actions correctrices identifiées. À discuter en équipe." },
+    { who: 'system', time: '11:18', text: "🚨 ALERT firing: HighCpu on worker-01 (severity P3) - sustained > 80% for 5 min" },
+    { who: 'karim', time: '11:20', text: "C'est le batch email du matin. Auto-résolu à 11:32." },
+    { who: 'system', time: '11:32', text: "✅ ALERT resolved: HighCpu on worker-01" },
+    { who: 'system', time: '14:45', text: "🚨 ALERT firing: StripeWebhookTimeout (severity P3) - intermittent" },
+    { who: 'loubna', time: '14:48', text: "Je regarde. Pas critique, retries OK." }
+  ],
+  'exec': [
+    { who: 'catherine', time: '09:00', text: "Bonjour. Rappel : le DSI Saint-Joseph nous demande une réponse à la grille audit (87 questions) avant le 15 du mois prochain. J'attends un point de la tech sur le statut." },
+    { who: 'hadrien', time: '09:32', text: "Top. Et @lead, dès que tu démarres, j'aimerais 30 min avec toi pour la levée Série B. Pas urgent cette semaine, mais bloque-moi 30 min la semaine prochaine stp." },
+    { who: 'catherine', time: '11:15', text: "J'ai relu le post-mortem SSO d'avril en faisant le tri du Drive. 5 actions correctrices, 0 faite. On en parle ?" },
+    { who: 'system', time: '13:30', text: "🤖 Reminder : All-hands jeudi 17h. Hadrien va parler de la prochaine étape." }
+  ],
+  'random': [
+    { who: 'theo', time: '09:42', text: "Quelqu'un a vu Le Cinquième Élément récemment ? Je le repasse ce week-end, je cherche des avis sur la version restaurée 4K." },
+    { who: 'mehdi', time: '09:48', text: "Pas vu. Mais j'ai revu Brazil hier soir, c'est encore plus prémonitoire qu'à l'époque." },
+    { who: 'karim', time: '10:30', text: "🐱 Mon chat a recommencé à dormir sur le clavier. Si je ping pendant l'astreinte avec des messages incompréhensibles, vous savez pourquoi." },
+    { who: 'loubna', time: '10:32', text: "@karim photo svp" },
+    { who: 'karim', time: '10:34', text: "[image attachée] - chat noir et blanc, complètement étalé sur clavier mécanique" },
+    { who: 'theo', time: '12:20', text: "Restaurant indien rue Saint-Maur, qui vient demain midi ? Je booke pour 4." },
+    { who: 'loubna', time: '12:25', text: "Moi 👍" },
+    { who: 'sarah', time: '12:28', text: "Je peux venir aussi ?" },
+    { who: 'theo', time: '12:29', text: "Bien sûr, je dis 5 alors." },
+    { who: 'mehdi', time: '14:02', text: "La machine à café fait encore le bruit. Je vote pour qu'on appelle Régis du facility." },
+    { who: 'antoine', time: '14:04', text: "Je vote pour qu'on la remplace tout court. Cette machine doit avoir au moins 6 ans." },
+    { who: 'manon', time: '14:08', text: "🎂 Joyeux anniversaire à Pénélope (avec un jour de retard, désolée hier on était au feu). Elle est en vacances cette semaine 🌴" },
+    { who: 'theo', time: '15:42', text: "Y'a un easter egg dans Cyberpunk 2077 où tu peux trouver une console qui affiche `404 Future Not Found`. J'adore." },
+    { who: 'loubna', time: '15:48', text: "🎵 J'ai partagé ma playlist Focus dans #general pour ceux qui bossent ce soir. Pas de paroles, juste du synth lent." }
+  ],
+  'general': [
+    { who: 'system', time: '08:00', text: "🤖 weekly-bot : nouvelle semaine, nouveaux défis. Bon courage à toutes et tous." },
+    { who: 'hadrien', time: '09:00', text: "Bonjour à toutes et tous. Petite annonce : on entre cette semaine dans la prépa de la Série B. J'aurai besoin de vous tous, je ferai une session dédiée jeudi en all-hands." },
+    { who: 'catherine', time: '10:45', text: "Rappel : revue annuelle des notes de frais avant le 30. Lien dans le Notion RH. Si vous galérez avec le formulaire, voir @iris." },
+    { who: 'manon', time: '11:30', text: "Petit ping pour vous dire que la Clinique du Parc a renouvelé ce matin pour 2 ans. 🎉 Merci à toute la tech qui a porté l'intégration." },
+    { who: 'theo', time: '14:15', text: "Rappel : on a un team-building escape game le 18 du mois prochain. Inscription dans le doodle, déjà 12 inscrits." }
+  ]
+};
+
+// ============================================================
+// BACKGROUND NOISE - injecté pendant la partie sur TOUS les channels
 // ============================================================
 const backgroundNoise = [
-  { who: 'theo', ch: 'random', text: "Quelqu'un a un avis sur le restaurant indien rue Saint-Maur ? On y va à midi demain." },
-  { who: 'loubna', ch: 'random', text: "🎵 Spotify playlist 'focus' partagée pour ceux qui bossent ce soir" },
-  { who: 'mehdi', ch: 'random', text: "La machine à café fait encore le bruit. Je vote pour qu'on appelle le réparateur." },
-  { who: 'system', ch: 'general', text: "Rappel : revue annuelle des notes de frais avant le 30. Lien dans le Notion RH." },
-  { who: 'karim', ch: 'random', text: "🎉 Bon anniversaire à Pénélope ! Un peu en retard, désolé hier j'étais débordé." },
-  { who: 'theo', ch: 'random', text: "Je rejoue à Hollow Knight ce week-end, qui me rejoint en discord ?" },
-  { who: 'system', ch: 'general', text: "All-hands jeudi 17h. Hadrien va parler de la prochaine levée." },
-  { who: 'loubna', ch: 'random', text: "Café offert au prochain qui résoud le bug FMH-525 avant moi 😎" }
+  // === #tech ===
+  { who: 'sarah', ch: 'tech', text: "Question rapide : c'est normal que ma PR sur les notifs ait 3 conflits avec develop ? Je rebase sur main directement comme dit Mehdi ?" },
+  { who: 'loubna', ch: 'tech', text: "@sarah oui rebase sur main. develop est mort 🪦" },
+  { who: 'antoine', ch: 'tech', text: "Pour info, je suis sur les 47 scénarios de non-régression. Je posterai un summary demain matin." },
+  { who: 'theo', ch: 'tech', text: "Je teste l'optimisation cache Redis sur staging. Si quelqu'un voit des trucs bizarres, c'est moi." },
+  { who: 'mehdi', ch: 'tech', text: "Reminder : NodeJS 20 est officiellement notre pin. Si vous avez encore Node 18 quelque part, migrez avant fin du mois." },
+  { who: 'system', ch: 'tech', text: "🤖 deployment-bot : staging redéployé par tvandekerkove. Build #4711 - 47 sec." },
+  { who: 'loubna', ch: 'tech', text: "Je vois que dependabot a ouvert 14 PR ce matin. Je traite les CVE critiques, je laisse le reste pour demain." },
+
+  // === #tech-support ===
+  { who: 'julien', ch: 'tech-support', text: "Petite stat : on a 3 tickets clients ce matin sur la téléconsultation. C'est pas encore live officiellement, donc soit ils ont eu un lien, soit c'est un bug du portail. Je creuse." },
+  { who: 'manon', ch: 'tech-support', text: "@julien le Dr Verrière a appelé pour FMH-525 (encore). J'ai pris le ticket, je le tiens jusqu'à correction." },
+  { who: 'julien', ch: 'tech-support', text: "Reminder : si quelqu'un vous parle de la Clinique Saint-Joseph, escalade direct à Manon ou Catherine. C'est un compte sensible cette semaine." },
+  { who: 'system', ch: 'tech-support', text: "🤖 support-bot : SLA hebdo respecté à 94.2% (cible 95%). On est juste sous la cible." },
+
+  // === #incidents ===
+  { who: 'system', ch: 'incidents', text: "🚨 ALERT firing: HighDatabaseConnections on postgres-prod-01 (severity P3) - 142/200" },
+  { who: 'karim', ch: 'incidents', text: "@here Connection pool monte. Probablement les retries de l'app patient. À surveiller, pas critique pour l'instant." },
+  { who: 'system', ch: 'incidents', text: "🚨 ALERT firing: EmailQueueDepth > 40 (severity P3)" },
+  { who: 'karim', ch: 'incidents', text: "Queue email qui grimpe. C'est lié aux retries notifications, normal pendant un incident records." },
+
+  // === #exec ===
+  { who: 'hadrien', ch: 'exec', text: "@catherine point Saint-Joseph quand tu veux. Je peux aussi parler au DSI directement si besoin (mais je préfère que tu m'y autorises avant)." },
+  { who: 'catherine', ch: 'exec', text: "@hadrien noté. J'attends d'avoir un statut tech avant de répondre au DSI. Tu n'appelles pas directement stp." },
+
+  // === #random ===
+  { who: 'theo', ch: 'random', text: "Bon, restaurant indien validé pour 5 demain midi 🍛" },
+  { who: 'loubna', ch: 'random', text: "🎵 Si Lo-Fi ne vous fait pas, j'ai aussi une playlist Krautrock pour les ambiances plus rugueuses." },
+  { who: 'mehdi', ch: 'random', text: "Quelqu'un d'autre a noté que la machine à café fait un bruit différent ce matin ? Pire que d'habitude." },
+  { who: 'karim', ch: 'random', text: "🐱 Update chat : il est maintenant sur la souris. Game over." },
+  { who: 'antoine', ch: 'random', text: "J'ai fini Disco Elysium hier soir. Probablement le meilleur jeu écrit que j'aie jamais joué. Je vous le recommande à tous, et c'est pas une figure de style." },
+  { who: 'theo', ch: 'random', text: "🎮 Quelqu'un a déjà fini Outer Wilds ? Sans spoiler, c'est jouable en mode autodidacte ou il faut absolument une soluce ?" },
+  { who: 'loubna', ch: 'random', text: "@theo autodidacte ABSOLU. Si tu lis une soluce tu casses 80% du jeu." },
+
+  // === #general ===
+  { who: 'system', ch: 'general', text: "🤖 weekly-bot : 27 PRs ouvertes cette semaine. 14 mergées. Top contributeur : @mehdi (8 merges)." },
+  { who: 'manon', ch: 'general', text: "Pour info, le Groupe Hospitalier Saint-Joseph vient de signer un avenant pour étendre à 2 cliniques supplémentaires. À fêter quand on aura le temps !" }
+];
+
+// === Easter eggs : messages spéciaux à fréquence faible ===
+const easterEggs = [
+  { who: 'mehdi', ch: 'random', text: "Petit hommage à Paul Vergneau, notre ex-CTO. Ça fait 9 mois qu'il est parti et j'attends toujours qu'il réponde à un mail que je lui avais envoyé. Si vous êtes en contact avec lui, dites-lui que ses comptes Twilio et Google Play sont toujours actifs. 🫥" },
+  { who: 'system', ch: 'tech', text: "🤖 git-bot : la branche develop a maintenant 1247 commits d'avance sur main. C'est probablement un record d'agence. 🏆" },
+  { who: 'system', ch: 'incidents', text: "🚨 ALERT firing: WONTFIX rate dépasse 30% sur les bugs ouverts > 60 jours (severity ... aucune, c'est juste pour info)" },
+  { who: 'loubna', ch: 'random', text: "🎂 Hot take : la machine à café à laquelle Mehdi se plaint a un âge supérieur à la moyenne de l'ancienneté équipe (3 ans contre 1,2 ans)." },
+  { who: 'theo', ch: 'random', text: "Je viens de tomber sur un commit que j'ai fait il y a 8 mois avec le message 'temp - to fix later'. Spoiler : c'est toujours en prod." },
+  { who: 'system', ch: 'general', text: "🤖 motivational-bot : The cake is a lie. (Cette ligne a été ajoutée au bot par Paul Vergneau il y a 14 mois, personne ne l'a jamais retirée.)" },
+  { who: 'antoine', ch: 'random', text: "Statistique du jour : sur les 47 bugs reproductibles que j'ai documentés, 12 sont au board public. Les 35 autres existent dans Notion. Personne ne les lit. Mais ils existent." },
+  { who: 'sarah', ch: 'random', text: "C'est juste moi ou Slack a un mode 'dark' qui s'inverse en 'darker' quand on regarde trop longtemps ?" },
+  { who: 'karim', ch: 'random', text: "📷 Photo de mon astreinte du weekend : 47 alertes reçues, dont 3 réelles. Le reste : noise. On parle vraiment de l'observabilité un jour ?" },
+  { who: 'mehdi', ch: 'tech', text: "Petit fait amusant : la PR #1842 ('Refactor du module notifications') a été ouverte par Théo il y a exactement 9 mois aujourd'hui. Joyeux anniversaire petite PR 🎂" },
+  { who: 'system', ch: 'tech-support', text: "🤖 sla-bot : FMH-525 (PDF prescription avec TEST) ouvert depuis 81 jours. Record absolu : FMH-412 (crash Android), 142 jours. 🥇" }
 ];
 
 function injectBackgroundNoise() {
-  // Don't inject during boot
   if (!document.querySelector('#app[style*="display: grid"], #app:not([style])')) return;
-  const msg = backgroundNoise[Math.floor(Math.random() * backgroundNoise.length)];
+  // 10% chance d'easter egg, sinon noise normal
+  const pool = (Math.random() < 0.1) ? easterEggs : backgroundNoise;
+  const msg = pool[Math.floor(Math.random() * pool.length)];
   const channel = msg.ch;
   const msgWithTime = { ...msg, time: clockStr(state.clockMinutes) };
   if (!state.messageStore[channel]) state.messageStore[channel] = [];
   state.messageStore[channel].push(msgWithTime);
-  // No toast for background noise (they're noise on purpose)
-  state.unread[channel] = (state.unread[channel] || 0) + 1;
-  // No unread badge update for random/general (they're "noise" channels)
+  // Light unread badge for noise channels
+  if (state.currentChannel !== channel || !$('view-slack').classList.contains('active')) {
+    state.unread[channel] = (state.unread[channel] || 0) + 1;
+    updateChannelBadge(channel);
+    updateSlackBadge();
+  } else {
+    // If viewing channel right now, append in DOM
+    $('slackMessages').appendChild(buildMessage(msgWithTime));
+    $('slackMessages').scrollTop = $('slackMessages').scrollHeight;
+  }
+}
+
+// Load history on first view of slack
+function loadChannelHistory() {
+  Object.entries(channelHistory).forEach(([channel, msgs]) => {
+    if (!state.messageStore[channel]) state.messageStore[channel] = [];
+    msgs.forEach(m => state.messageStore[channel].push(m));
+  });
 }
 
 // ============================================================
 // BOOT
 // ============================================================
 window.addEventListener('load', () => {
-  // Inject initial alerts as messages in tech-support history so they're visible
+  // Load channel history so all channels feel alive
+  loadChannelHistory();
+  // Start boot animation
   setTimeout(bootStep, 300);
-  // Background noise every 25-45 seconds of real time
+  // Background noise every 20-30s, 60% chance
   setInterval(() => {
-    if (Math.random() < 0.4) injectBackgroundNoise();
-  }, 30000);
+    if (Math.random() < 0.6) injectBackgroundNoise();
+  }, 25000);
 });
 </script>
 

@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FeedMyHealth - Incident Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-dark: #0a0e1a;
+  --bg-card: #111827;
+  --bg-deep: #050810;
+  --accent-cyan: #06b6d4;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --accent-violet: #8b5cf6;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-dim: #475569;
+  --border: #1e293b;
+  --danger: #ef4444;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* ===== Header ===== */
+.app-header {
+  background: var(--bg-deep);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.app-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.logo-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent-rose);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.2); }
+}
+.app-title h1 {
+  font-size: 1.05em;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.app-title .subtitle {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75em;
+  color: var(--accent-rose);
+  margin-left: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.clock {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--accent-cyan);
+  background: rgba(6, 182, 212, 0.08);
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(6, 182, 212, 0.2);
+}
+.elapsed {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8em;
+  color: var(--text-dim);
+  margin-left: 12px;
+}
+
+/* ===== Intro screen ===== */
+.intro-screen {
+  max-width: 880px;
+  margin: 60px auto;
+  padding: 0 24px;
+}
+.intro-screen h2 {
+  font-size: 2.2em;
+  font-weight: 700;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, var(--accent-rose), var(--accent-amber));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.intro-screen p {
+  font-size: 1.05em;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+.intro-screen .info-box {
+  background: rgba(244, 63, 94, 0.06);
+  border: 1px solid rgba(244, 63, 94, 0.2);
+  border-radius: 10px;
+  padding: 20px;
+  margin: 24px 0;
+}
+.intro-screen .info-box.tip {
+  background: rgba(6, 182, 212, 0.06);
+  border-color: rgba(6, 182, 212, 0.2);
+}
+.start-btn {
+  background: linear-gradient(135deg, var(--accent-rose), var(--accent-amber));
+  color: white;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 8px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 24px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(244, 63, 94, 0.25);
+}
+
+/* ===== Main layout ===== */
+.simulation {
+  display: none;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 16px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+.simulation.active { display: grid; }
+.left-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.right-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ===== Cards ===== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.card-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-deep);
+}
+.card-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.card-body {
+  padding: 16px;
+}
+
+/* ===== Dashboard metrics ===== */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.metric {
+  background: var(--bg-deep);
+  padding: 14px;
+  border-radius: 8px;
+  border-left: 3px solid var(--text-dim);
+  transition: border-left-color 0.3s;
+}
+.metric.warning { border-left-color: var(--accent-amber); }
+.metric.danger { border-left-color: var(--accent-rose); }
+.metric.healthy { border-left-color: var(--accent-emerald); }
+.metric-label {
+  font-size: 0.72em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.metric-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.6em;
+  font-weight: 600;
+}
+.metric-value.warning { color: var(--accent-amber); }
+.metric-value.danger { color: var(--accent-rose); }
+.metric-value.healthy { color: var(--accent-emerald); }
+.metric-trend {
+  font-size: 0.75em;
+  color: var(--text-dim);
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ===== Chart placeholder ===== */
+.chart {
+  height: 120px;
+  background: var(--bg-deep);
+  border-radius: 8px;
+  margin-top: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.chart-bar {
+  position: absolute;
+  bottom: 0;
+  width: 3.3%;
+  background: linear-gradient(to top, var(--accent-cyan), var(--accent-cyan) 30%, rgba(6, 182, 212, 0.3));
+  transition: height 0.5s ease;
+}
+.chart-bar.spike {
+  background: linear-gradient(to top, var(--accent-rose), var(--accent-rose) 30%, rgba(244, 63, 94, 0.4));
+}
+.chart-label {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7em;
+  color: var(--text-dim);
+}
+
+/* ===== Logs panel ===== */
+.logs {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78em;
+  background: #000;
+  padding: 12px 16px;
+  border-radius: 8px;
+  height: 200px;
+  overflow-y: auto;
+  line-height: 1.6;
+}
+.log-line {
+  color: var(--text-dim);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.log-line .ts { color: var(--text-dim); }
+.log-line.warn { color: var(--accent-amber); }
+.log-line.error { color: var(--accent-rose); }
+.log-line.info { color: var(--accent-cyan); }
+.log-line.success { color: var(--accent-emerald); }
+
+/* ===== Slack panel ===== */
+.chat {
+  height: 360px;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+.message {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 12px;
+  animation: slideIn 0.3s ease;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background: var(--bg-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85em;
+  flex-shrink: 0;
+}
+.avatar.julien { background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); }
+.avatar.karim { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); }
+.avatar.mehdi { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+.avatar.catherine { background: rgba(139, 92, 246, 0.15); color: var(--accent-violet); }
+.avatar.hadrien { background: rgba(236, 72, 153, 0.15); color: #ec4899; }
+.avatar.loubna { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); }
+.avatar.system { background: rgba(100, 116, 139, 0.15); color: var(--text-dim); }
+.msg-body { flex: 1; min-width: 0; }
+.msg-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.msg-author { font-weight: 600; font-size: 0.92em; }
+.msg-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72em;
+  color: var(--text-dim);
+}
+.msg-channel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7em;
+  color: var(--text-dim);
+  background: rgba(100, 116, 139, 0.1);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.msg-content {
+  font-size: 0.92em;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* ===== Scenario panel ===== */
+.scenario {
+  margin-bottom: 16px;
+}
+.scenario h3 {
+  font-size: 1.05em;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+.scenario p {
+  font-size: 0.92em;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ===== Actions ===== */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.action-btn {
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 14px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  font-size: 0.92em;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.action-btn:hover:not(:disabled) {
+  border-color: var(--accent-cyan);
+  background: rgba(6, 182, 212, 0.06);
+  transform: translateX(2px);
+}
+.action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.action-btn .icon {
+  width: 28px;
+  height: 28px;
+  background: var(--bg-card);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85em;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  flex-shrink: 0;
+}
+.action-btn .label {
+  flex: 1;
+}
+.action-btn .cost {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72em;
+  color: var(--text-dim);
+}
+
+/* ===== Decision log ===== */
+.decision-log {
+  font-size: 0.85em;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.decision-item {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+}
+.decision-item:last-child { border-bottom: none; }
+.decision-time {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-dim);
+  font-size: 0.85em;
+  flex-shrink: 0;
+}
+.decision-text {
+  color: var(--text-secondary);
+}
+
+/* ===== Final report ===== */
+.report-screen {
+  display: none;
+  max-width: 960px;
+  margin: 40px auto;
+  padding: 0 24px;
+}
+.report-screen.active { display: block; }
+.report-screen h2 {
+  font-size: 2em;
+  margin-bottom: 20px;
+}
+.outcome-banner {
+  padding: 20px 24px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  border: 1px solid;
+}
+.outcome-banner.good {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+.outcome-banner.medium {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+.outcome-banner.bad {
+  background: rgba(244, 63, 94, 0.08);
+  border-color: rgba(244, 63, 94, 0.3);
+}
+.outcome-banner h3 {
+  font-size: 1.3em;
+  margin-bottom: 8px;
+}
+.outcome-banner.good h3 { color: var(--accent-emerald); }
+.outcome-banner.medium h3 { color: var(--accent-amber); }
+.outcome-banner.bad h3 { color: var(--accent-rose); }
+.report-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.report-section h3 {
+  font-size: 1.05em;
+  margin-bottom: 12px;
+  color: var(--accent-cyan);
+}
+.report-section ul {
+  padding-left: 20px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.report-section ul li { margin-bottom: 8px; }
+.report-section strong { color: var(--text-primary); }
+.scores {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 16px 0;
+}
+.score-card {
+  text-align: center;
+  padding: 16px;
+  background: var(--bg-deep);
+  border-radius: 8px;
+}
+.score-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2em;
+  font-weight: 700;
+  color: var(--accent-cyan);
+}
+.score-label {
+  font-size: 0.78em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 6px;
+}
+.restart-btn {
+  background: transparent;
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.92em;
+  margin-top: 16px;
+}
+.restart-btn:hover {
+  background: rgba(6, 182, 212, 0.08);
+}
+
+/* ===== Toast notifications ===== */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--accent-cyan);
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 0.9em;
+  animation: toastIn 0.3s ease;
+  z-index: 200;
+  max-width: 360px;
+}
+.toast.danger { border-color: var(--accent-rose); }
+.toast.warning { border-color: var(--accent-amber); }
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1100px) {
+  .simulation.active { grid-template-columns: 1fr; }
+}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-title">
+    <span class="logo-dot"></span>
+    <h1>FeedMyHealth - Incident Console</h1>
+    <span class="subtitle" id="modeLabel">PRÊT</span>
+  </div>
+  <div>
+    <span class="clock mono" id="clock">--:--</span>
+    <span class="elapsed" id="elapsed">T+0</span>
+  </div>
+</header>
+
+<!-- ===== Intro ===== -->
+<div class="intro-screen" id="introScreen">
+  <h2>Console de gestion d'incident</h2>
+  <p>Vous êtes lead dev / CTO chez FeedMyHealth. Il est <strong>16h17</strong>. Une release a été déployée à 16h05. Quelque chose ne va pas.</p>
+  <p>Vous avez 30 minutes pour prendre des décisions, lire les logs, communiquer aux bonnes personnes et stabiliser le service. Chaque décision a des conséquences. Chaque minute compte.</p>
+  <div class="info-box">
+    <strong>Règles de la console</strong>
+    <p style="margin-top: 8px;">Vous travaillez avec ce que vous voyez à l'écran : dashboard, logs, fil Slack, accès aux actions. Vous n'avez PAS accès à l'extérieur. Pas de Google, pas d'aide formateur.</p>
+    <p style="margin-top: 8px;">Vous discutez en groupe avant chaque décision. Une fois cliquée, l'action est validée et la suite se déclenche.</p>
+    <p style="margin-top: 8px;">À la fin (T+30), un rapport vous indique : ce que vous avez réussi, ce que vous avez raté, et pourquoi.</p>
+  </div>
+  <div class="info-box tip">
+    <strong>Conseil avant de démarrer</strong>
+    <p style="margin-top: 8px;">Désignez un capitaine (celui qui clique), un scribe (qui note vos hypothèses), et un communicant (qui rédige les messages quand demandés). Les autres lisent et discutent.</p>
+  </div>
+  <button class="start-btn" onclick="startSimulation()">Démarrer l'incident (16h22)</button>
+</div>
+
+<!-- ===== Simulation ===== -->
+<div class="simulation" id="simulationScreen">
+  <div class="left-pane">
+
+    <!-- Métriques temps réel -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">api.feedmyhealth.io - status</span>
+        <span class="mono" style="color:var(--text-dim); font-size:0.75em;" id="liveIndicator">● LIVE</span>
+      </div>
+      <div class="card-body">
+        <div class="metrics-grid">
+          <div class="metric" id="metric-errors">
+            <div class="metric-label">5xx / 5 min</div>
+            <div class="metric-value mono" id="val-errors">0</div>
+            <div class="metric-trend" id="trend-errors">stable</div>
+          </div>
+          <div class="metric" id="metric-latency">
+            <div class="metric-label">Latency p95</div>
+            <div class="metric-value mono" id="val-latency">420 ms</div>
+            <div class="metric-trend" id="trend-latency">stable</div>
+          </div>
+          <div class="metric" id="metric-rps">
+            <div class="metric-label">Requests / sec</div>
+            <div class="metric-value mono" id="val-rps">87</div>
+            <div class="metric-trend" id="trend-rps">stable</div>
+          </div>
+          <div class="metric" id="metric-tickets">
+            <div class="metric-label">Tickets support</div>
+            <div class="metric-value mono" id="val-tickets">0</div>
+            <div class="metric-trend" id="trend-tickets">stable</div>
+          </div>
+        </div>
+        <div class="chart" id="chart">
+          <span class="chart-label mono">5xx /min - 30 dernières minutes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logs -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">/var/log/app.log - tail -f</span>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        <div class="logs" id="logsPanel"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="right-pane">
+
+    <!-- Slack feed -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">slack - canaux #tech #incidents #exec</span>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        <div class="chat" id="chatPanel"></div>
+      </div>
+    </div>
+
+    <!-- Scénario + Actions -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">décision</span>
+        <span class="mono" style="color:var(--text-dim); font-size:0.75em;" id="sceneId">--</span>
+      </div>
+      <div class="card-body">
+        <div class="scenario" id="scenarioPanel"></div>
+        <div class="actions" id="actionsPanel"></div>
+      </div>
+    </div>
+
+    <!-- Journal de décisions -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">journal des décisions</span>
+      </div>
+      <div class="card-body" style="padding: 12px 16px;">
+        <div class="decision-log" id="decisionLog">
+          <div style="color: var(--text-dim); font-size:0.85em;">Aucune décision encore prise.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== Final Report ===== -->
+<div class="report-screen" id="reportScreen"></div>
+
+<script>
+// ===========================================================
+// State
+// ===========================================================
+const state = {
+  scene: 'start',
+  startTime: new Date(2026, 0, 1, 16, 22),
+  clockMinutes: 22, // current minute (16:XX)
+  decisions: [],
+  flags: {
+    investigatedLogs: false,
+    karimAvailable: false,
+    mehdiAvailable: false,
+    saintJosephCalled: false,
+    rollbackAttempted: false,
+    rollbackFailed: false,
+    hotfixApplied: false,
+    endpointDisabled: false,
+    communicatedClients: false,
+    catherineUpdated: false,
+    hadrienUpdated: false,
+    permissionsBugFound: false,
+    e2eTestMentioned: false
+  },
+  metrics: {
+    errors: 0,
+    latency: 420,
+    rps: 87,
+    tickets: 0
+  },
+  outcome: null
+};
+
+// ===========================================================
+// Scenes
+// ===========================================================
+const scenes = {
+
+  start: {
+    time: 22,
+    metrics: { errors: 47, latency: 1850, rps: 91, tickets: 12 },
+    logs: [
+      { type: 'info', text: '16:17:02 INFO POST /v1/records - 200 OK 412ms' },
+      { type: 'info', text: '16:17:04 INFO GET /v1/records/482311 - 200 OK 385ms' },
+      { type: 'error', text: '16:17:08 ERROR GET /v1/records/482312 - 500 Internal Server Error' },
+      { type: 'error', text: '16:17:11 ERROR GET /v1/records/482314 - 500 Internal Server Error' },
+      { type: 'error', text: '16:17:15 ERROR GET /v1/records/482317 - 500 Internal Server Error' },
+      { type: 'warn',  text: '16:17:22 WARN  Rate of 5xx exceeding threshold on /v1/records' }
+    ],
+    messages: [
+      { who: 'julien', ch: '#tech-support', text: "On a 40 tickets en 5 minutes. Les médecins disent qu'ils n'ont plus accès aux dossiers patients. Erreur 500. Saint-Joseph nous a déjà appelés 2 fois. Vous êtes au courant ? Je dis quoi aux clients ?" }
+    ],
+    scenario: {
+      title: "16h22 - Première alerte",
+      text: "Vous étiez en train de relire votre roadmap. Julien vient de vous ping. Le dashboard montre une montée brutale d'erreurs 500 sur /v1/records. Une release est passée à 16h05 il y a 17 minutes. Mehdi est en appel client. Karim n'est pas joignable (RDV médical). Que faites-vous en premier ?"
+    },
+    actions: [
+      { label: "Ouvrir les logs et comprendre l'erreur avant d'agir", icon: "🔍", goto: 'logs1', flag: 'investigatedLogs' },
+      { label: "Rollback immédiat (sans investiguer)", icon: "⏮", goto: 'rollback_blind' },
+      { label: "Écrire un message client tout de suite", icon: "✉", goto: 'comm_early' },
+      { label: "Appeler Karim au téléphone (interrompre son RDV)", icon: "📞", goto: 'karim_call' }
+    ]
+  },
+
+  logs1: {
+    time: 25,
+    metrics: { errors: 92, latency: 2400, rps: 88, tickets: 23 },
+    logs: [
+      { type: 'error', text: '16:24:31 ERROR records/index.js:142 - TypeError: Cannot read prop "doctorId" of null' },
+      { type: 'error', text: '16:24:35 ERROR records/permissions.js:78 - permission check returned null' },
+      { type: 'warn',  text: '16:24:38 WARN  module: records | commit: 7f3c19a8 by tvandekerkove' },
+      { type: 'info',  text: '16:24:42 INFO  rolling deployment id: dpl-29488 active since 16:05:12' }
+    ],
+    messages: [
+      { who: 'karim', ch: '#tech', text: "Je rentre tout juste de mon RDV. Je vois passer les alertes. C'est l'API qui renvoie du 500 sur /v1/records. Le worker tourne. Tu veux que je rollback ? Le rollback est cassé depuis avril, faut le faire à la main." }
+    ],
+    scenario: {
+      title: "Les logs parlent",
+      text: "L'erreur vient du module records, commit 7f3c19a8 par Théo (tvandekerkove), il y a moins d'une heure. Le check de permissions retourne null. Karim est arrivé et vous prévient : le rollback automatique est cassé depuis avril.",
+      onEnter: () => { state.flags.permissionsBugFound = true; state.flags.karimAvailable = true; }
+    },
+    actions: [
+      { label: "Identifier la PR de Théo et lire le code modifié", icon: "🔎", goto: 'identify_pr' },
+      { label: "Demander à Karim de tenter un rollback manuel guidé", icon: "⏮", goto: 'manual_rollback' },
+      { label: "Désactiver temporairement le endpoint /v1/records", icon: "⛔", goto: 'disable_endpoint' }
+    ]
+  },
+
+  rollback_blind: {
+    time: 25,
+    metrics: { errors: 92, latency: 2400, rps: 88, tickets: 23 },
+    logs: [
+      { type: 'info',  text: '16:23:10 INFO  rollback script invoked by lead' },
+      { type: 'error', text: '16:23:18 ERROR rollback.sh: previous image tag not found' },
+      { type: 'error', text: '16:23:19 ERROR rollback FAILED - manifest checksum mismatch' },
+      { type: 'warn',  text: '16:23:20 WARN  /v1/records still returning 5xx' }
+    ],
+    messages: [
+      { who: 'karim', ch: '#tech', text: "Eh, tu sais que le rollback automatique est cassé depuis avril ? Je viens d'arriver. Faut le faire à la main, et il faut savoir vers quel tag remonter. T'as lancé le truc sans regarder ?" }
+    ],
+    scenario: {
+      title: "Rollback raté",
+      text: "Vous avez lancé le rollback sans avoir vérifié qu'il fonctionnait. Le script échoue : le tag de l'image précédente n'existe plus. Karim arrive et vous prévient (tardivement) que le rollback est cassé depuis l'incident SSO d'avril. Vous avez perdu 3 minutes.",
+      onEnter: () => { state.flags.rollbackAttempted = true; state.flags.rollbackFailed = true; state.flags.karimAvailable = true; }
+    },
+    actions: [
+      { label: "Ouvrir les logs pour identifier la cause", icon: "🔍", goto: 'logs1', flag: 'investigatedLogs' },
+      { label: "Désactiver le endpoint /v1/records en urgence", icon: "⛔", goto: 'disable_endpoint' },
+      { label: "Demander à Karim un rollback manuel pas à pas", icon: "⏮", goto: 'manual_rollback' }
+    ]
+  },
+
+  comm_early: {
+    time: 24,
+    metrics: { errors: 71, latency: 2100, rps: 89, tickets: 17 },
+    logs: [
+      { type: 'error', text: '16:23:31 ERROR GET /v1/records/482401 - 500 Internal Server Error' },
+      { type: 'error', text: '16:23:35 ERROR GET /v1/records/482402 - 500 Internal Server Error' },
+      { type: 'error', text: '16:23:42 ERROR GET /v1/records/482403 - 500 Internal Server Error' }
+    ],
+    messages: [
+      { who: 'system', ch: '#tech', text: "Vous avez envoyé : 'On a un incident en cours sur le portail médecin, nos équipes regardent.'" },
+      { who: 'catherine', ch: '#exec', text: "Vous me dites quoi exactement ? 'Nos équipes regardent', je ne peux pas dire ça au DSI de Saint-Joseph. Il faut des faits, pas des intentions. Vous savez ce qui se passe ou pas ?" }
+    ],
+    scenario: {
+      title: "Catherine vous recadre",
+      text: "Vous avez envoyé un message sans savoir ce qui se passait. Catherine vous interpelle directement : elle ne peut rien dire à Saint-Joseph avec 'nos équipes regardent'. Vous avez perdu 2 minutes et un peu de crédibilité. Reprenez l'investigation.",
+      onEnter: () => { state.flags.communicatedClients = false; }
+    },
+    actions: [
+      { label: "Ouvrir les logs pour comprendre l'erreur", icon: "🔍", goto: 'logs1', flag: 'investigatedLogs' },
+      { label: "Rollback en urgence", icon: "⏮", goto: 'rollback_blind' }
+    ]
+  },
+
+  karim_call: {
+    time: 24,
+    metrics: { errors: 71, latency: 2100, rps: 89, tickets: 17 },
+    logs: [
+      { type: 'error', text: '16:23:31 ERROR GET /v1/records/482401 - 500 Internal Server Error' },
+      { type: 'error', text: '16:23:35 ERROR GET /v1/records/482402 - 500 Internal Server Error' }
+    ],
+    messages: [
+      { who: 'karim', ch: '#tech', text: "Je suis en RDV chez le médecin pour ma fille. Je peux pas répondre au téléphone. Je rentre dans 15 minutes maximum. Tu peux te débrouiller avec Mehdi ? Si non, désactive le endpoint en attendant." }
+    ],
+    scenario: {
+      title: "Karim est en RDV familial",
+      text: "Karim vous explique par message qu'il est chez le médecin avec sa fille. Il ne peut pas répondre. Il revient dans 15 minutes maximum. En attendant, il suggère soit Mehdi (qui est en appel), soit désactiver le endpoint."
+    },
+    actions: [
+      { label: "Ouvrir les logs et investiguer seul", icon: "🔍", goto: 'logs1', flag: 'investigatedLogs' },
+      { label: "Désactiver le endpoint /v1/records", icon: "⛔", goto: 'disable_endpoint' },
+      { label: "Attendre Karim (perdre 15 min)", icon: "⏳", goto: 'wait_karim' }
+    ]
+  },
+
+  wait_karim: {
+    time: 39,
+    metrics: { errors: 184, latency: 3200, rps: 76, tickets: 67 },
+    logs: [
+      { type: 'error', text: '16:38:31 ERROR cascade failure - dependent services starting to fail' },
+      { type: 'warn',  text: '16:38:35 WARN  patient app retry storm detected' },
+      { type: 'error', text: '16:38:51 ERROR 5xx rate exceeded SLA threshold for 22 consecutive minutes' }
+    ],
+    messages: [
+      { who: 'karim', ch: '#tech', text: "Je suis revenu. Mais 15 minutes pendant lesquelles tu n'as rien fait, c'est trop. On a un effet cascade. Le SLA Saint-Joseph est cassé. Penalty enclenchée." },
+      { who: 'catherine', ch: '#exec', text: "On a perdu 22 minutes sans rien faire ? Je vais devoir expliquer ça au DSI Saint-Joseph. C'est mauvais." }
+    ],
+    scenario: {
+      title: "Attente passive : effet cascade",
+      text: "Pendant que vous attendiez Karim, l'incident s'est aggravé. Les retries de l'app patient ont créé une cascade. Le SLA est cassé. Vous reprenez la main mais avec un coût important. Le verdict final sera dur.",
+      onEnter: () => { state.flags.karimAvailable = true; }
+    },
+    actions: [
+      { label: "Désactiver le endpoint maintenant", icon: "⛔", goto: 'disable_endpoint' },
+      { label: "Identifier la cause dans les logs", icon: "🔍", goto: 'identify_pr', flag: 'investigatedLogs' }
+    ]
+  },
+
+  identify_pr: {
+    time: 28,
+    metrics: { errors: 118, latency: 2700, rps: 87, tickets: 31 },
+    logs: [
+      { type: 'info',  text: '16:27:11 INFO  PR #2487 by tvandekerkove merged at 15:58 - "Refactor permissions check on records"' },
+      { type: 'warn',  text: '16:27:14 WARN  PR was approved by 1 reviewer (kthorenfeld) - no QA sign-off' },
+      { type: 'warn',  text: '16:27:18 WARN  E2E tests on records flow have been disabled in CI since 2025-04-15' },
+      { type: 'error', text: '16:27:22 ERROR diff suggests permissions filter no longer applied to doctor scope queries' }
+    ],
+    messages: [
+      { who: 'mehdi', ch: '#tech', text: "Je viens de raccrocher. Je vois passer. C'est la PR de Théo sur le module records, il a refacto la requête. Il a oublié de re-appliquer le filtre permissions médecin sur la nouvelle query. Confirmé : la query renvoie correctement mais le filtre est mort." },
+      { who: 'loubna', ch: '#tech', text: "Pour info, les tests E2E sur ce flow ont été désactivés en avril après l'incident SSO. Si on les avait laissés tourner, ça aurait été pris au build." }
+    ],
+    scenario: {
+      title: "Cause identifiée : permissions cassées",
+      text: "Vous avez la cause précise. Théo a refacto la requête de records sans appliquer le filtre permissions médecin. Le test E2E qui aurait pu prendre ça a été désactivé il y a 4 mois. Mehdi est revenu et confirme.",
+      onEnter: () => { state.flags.mehdiAvailable = true; state.flags.e2eTestMentioned = true; }
+    },
+    actions: [
+      { label: "Hotfix : ré-appliquer le filtre permissions et déployer", icon: "🔧", goto: 'hotfix_attempt' },
+      { label: "Rollback manuel guidé par Karim", icon: "⏮", goto: 'manual_rollback' },
+      { label: "Désactiver le endpoint le temps de fixer proprement", icon: "⛔", goto: 'disable_endpoint' }
+    ]
+  },
+
+  manual_rollback: {
+    time: 38,
+    metrics: { errors: 12, latency: 580, rps: 82, tickets: 41 },
+    logs: [
+      { type: 'info',  text: '16:30:11 INFO  Karim: identifying previous stable tag - dpl-29487' },
+      { type: 'info',  text: '16:32:48 INFO  pulling image registry/feedmyhealth-app:dpl-29487...' },
+      { type: 'info',  text: '16:35:12 INFO  rolling deployment to dpl-29487 initiated' },
+      { type: 'info',  text: '16:36:55 INFO  deployment complete' },
+      { type: 'success', text: '16:37:42 INFO  /v1/records - 200 OK 380ms (recovery confirmed)' }
+    ],
+    messages: [
+      { who: 'karim', ch: '#tech', text: "Service rétabli à 16h37. On a perdu 20 minutes au total. Le SLA tient (juste). La cause reste à fixer dans le code, c'est juste un rollback. Théo devra refaire sa PR avec le filtre permissions cette fois." },
+      { who: 'catherine', ch: '#exec', text: "Bien joué. Je peux maintenant écrire à Saint-Joseph avec des faits. Je veux votre message client + un post-mortem express pour demain matin." }
+    ],
+    scenario: {
+      title: "Service rétabli par rollback manuel",
+      text: "Karim et vous avez tenu un rollback manuel propre. Service rétabli à 16h37, 20 minutes après le début de l'incident. Le SLA tient. La cause reste à fixer dans le code mais le service est revenu.",
+      onEnter: () => { state.flags.rollbackAttempted = true; state.flags.rollbackFailed = false; }
+    },
+    actions: [
+      { label: "Rédiger le message client + alerter Catherine", icon: "✉", goto: 'communicate_resolved' }
+    ]
+  },
+
+  hotfix_attempt: {
+    time: 36,
+    metrics: { errors: 6, latency: 520, rps: 88, tickets: 38 },
+    logs: [
+      { type: 'info',  text: '16:31:11 INFO  PR #2491 by lead - "Hotfix: restore permission filter on records"' },
+      { type: 'info',  text: '16:33:48 INFO  CI pipeline running (E2E disabled, only unit tests)' },
+      { type: 'success', text: '16:34:12 INFO  build success, deploying...' },
+      { type: 'info',  text: '16:35:08 INFO  deployment to prod complete' },
+      { type: 'success', text: '16:35:42 INFO  /v1/records - 200 OK 390ms (recovery confirmed)' }
+    ],
+    messages: [
+      { who: 'mehdi', ch: '#tech', text: "Le hotfix tient. Mais on a déployé sans test E2E. Si on a oublié un autre filtre, on est nus. C'est la 2e fois aujourd'hui qu'on déploie aveugle. Faudra qu'on parle des E2E une fois la poussière retombée." },
+      { who: 'catherine', ch: '#exec', text: "Service rétabli ? Bien. Je veux votre message Saint-Joseph et un post-mortem demain. On parle de ce qui se passera la prochaine fois." }
+    ],
+    scenario: {
+      title: "Hotfix appliqué - mais à l'aveugle",
+      text: "Vous avez patché et déployé. Service rétabli à 16h35, 13 minutes après le début. Le filtre permissions est restauré. Mehdi pointe le vrai sujet : les tests E2E sont désactivés, vous avez déployé sans filet. Une victoire teintée d'une dette technique qui revient.",
+      onEnter: () => { state.flags.hotfixApplied = true; state.flags.mehdiAvailable = true; }
+    },
+    actions: [
+      { label: "Rédiger le message client + alerter Catherine", icon: "✉", goto: 'communicate_resolved' }
+    ]
+  },
+
+  disable_endpoint: {
+    time: 32,
+    metrics: { errors: 4, latency: 410, rps: 67, tickets: 52 },
+    logs: [
+      { type: 'info',  text: '16:30:11 INFO  endpoint /v1/records disabled via feature toggle (manual)' },
+      { type: 'warn',  text: '16:30:14 WARN  doctor portal will return 503 Service Unavailable on records read' },
+      { type: 'success', text: '16:30:18 INFO  no more 500 errors on /v1/records (endpoint disabled)' },
+      { type: 'info',  text: '16:31:02 INFO  patient app: write path still functional' }
+    ],
+    messages: [
+      { who: 'system', ch: '#tech', text: "Endpoint /v1/records désactivé. Les médecins reçoivent 503 quand ils essaient d'ouvrir un dossier. Les patients peuvent toujours écrire dans l'app. Vous avez stoppé l'hémorragie mais le service côté médecin est down." },
+      { who: 'julien', ch: '#tech-support', text: "OK je peux dire quelque chose aux clients maintenant. Je dis quoi exactement ? Service indisponible volontairement le temps de fixer ? Vous me donnez la formulation ?" }
+    ],
+    scenario: {
+      title: "Endpoint désactivé : on a stoppé l'hémorragie",
+      text: "Le /v1/records renvoie 503 maintenant. Les 500 ont disparu. Les médecins ne peuvent pas lire les dossiers, mais les patients peuvent toujours saisir. Vous avez du temps pour fixer proprement, mais le service médecin est officiellement down.",
+      onEnter: () => { state.flags.endpointDisabled = true; }
+    },
+    actions: [
+      { label: "Hotfix maintenant qu'on a du temps", icon: "🔧", goto: 'hotfix_attempt_safe' },
+      { label: "Rollback manuel guidé par Karim", icon: "⏮", goto: 'manual_rollback' },
+      { label: "Communiquer aux médecins d'abord", icon: "✉", goto: 'communicate_during' }
+    ]
+  },
+
+  hotfix_attempt_safe: {
+    time: 42,
+    metrics: { errors: 0, latency: 395, rps: 84, tickets: 58 },
+    logs: [
+      { type: 'info',  text: '16:36:11 INFO  PR #2491 by lead - "Hotfix: restore permission filter on records"' },
+      { type: 'info',  text: '16:38:48 INFO  CI pipeline running on isolated branch' },
+      { type: 'success', text: '16:39:12 INFO  build success, deploying...' },
+      { type: 'info',  text: '16:40:08 INFO  endpoint re-enabled with new code' },
+      { type: 'success', text: '16:41:42 INFO  /v1/records - 200 OK 385ms (fully recovered)' }
+    ],
+    messages: [
+      { who: 'mehdi', ch: '#tech', text: "Service rétabli à 16h41. 20 minutes au total. Pas idéal mais sans cascade. La PR est propre, j'ai relu." },
+      { who: 'catherine', ch: '#exec', text: "OK service rétabli. Je veux votre message Saint-Joseph et un post-mortem demain. Bien d'avoir séparé la communication client de la résolution technique." }
+    ],
+    scenario: {
+      title: "Service rétabli sans cascade",
+      text: "Endpoint désactivé puis fixé proprement. Service rétabli à 16h41, 20 minutes après le début. Pas de cascade. Mehdi a relu le hotfix avant déploiement. Catherine est satisfaite de la séparation entre communication client et résolution technique.",
+      onEnter: () => { state.flags.hotfixApplied = true; state.flags.mehdiAvailable = true; }
+    },
+    actions: [
+      { label: "Rédiger le message client + alerter Catherine", icon: "✉", goto: 'communicate_resolved' }
+    ]
+  },
+
+  communicate_during: {
+    time: 34,
+    metrics: { errors: 4, latency: 410, rps: 67, tickets: 41 },
+    logs: [
+      { type: 'info', text: '16:32:11 INFO  outbound email batch: 1100 médecins notified' }
+    ],
+    messages: [
+      { who: 'system', ch: '#exec', text: "Votre message client : 'Bonjour, nous rencontrons un incident sur le portail médecin depuis 16h17. L'accès aux dossiers est temporairement désactivé pendant que nous corrigeons. Nous estimons une résolution sous 30 minutes. Le service patient n'est pas impacté. Nous reviendrons vers vous dès le retour à la normale.'" },
+      { who: 'catherine', ch: '#exec', text: "Bon message. Factuel, calme, avec une estimation. Saint-Joseph va comprendre. Continuez avec la résolution." }
+    ],
+    scenario: {
+      title: "Médecins informés, on continue à fixer",
+      text: "Le message client est parti. 1 100 médecins ont reçu un mail factuel et calme. Catherine valide. Maintenant il faut fixer le code.",
+      onEnter: () => { state.flags.communicatedClients = true; }
+    },
+    actions: [
+      { label: "Hotfix le filtre permissions", icon: "🔧", goto: 'hotfix_attempt_safe' },
+      { label: "Rollback manuel avec Karim", icon: "⏮", goto: 'manual_rollback' }
+    ]
+  },
+
+  communicate_resolved: {
+    time: 45,
+    metrics: { errors: 0, latency: 380, rps: 89, tickets: 58 },
+    logs: [
+      { type: 'info', text: '16:42:11 INFO  outbound email batch: 1100 médecins notified - resolution confirmed' }
+    ],
+    messages: [
+      { who: 'system', ch: '#exec', text: "Votre message : 'L'incident survenu de 16h17 à 16h41 sur le portail médecin est résolu. La cause a été identifiée (régression sur les permissions, déploiement de 16h05) et corrigée. Nous transmettrons un post-mortem détaillé au DSI sous 24h. Toutes nos excuses pour la gêne.'" },
+      { who: 'catherine', ch: '#exec', text: "Parfait. Précis, sans excuse excessive, avec un engagement post-mortem. J'écris au DSI Saint-Joseph maintenant." },
+      { who: 'hadrien', ch: '#exec', text: "OK service rétabli. Je veux un point demain à 9h. Pourquoi ça s'est passé, ce qu'on fait pour pas que ça se reproduise, et combien ça nous coûte si Saint-Joseph râle." }
+    ],
+    scenario: {
+      title: "Post-incident : que retient-on ?",
+      text: "Service rétabli. Message envoyé. Catherine relaie à Saint-Joseph. Hadrien veut un point demain. Avant le post-mortem détaillé, votre dernière décision : quelle est la cause RACINE de cet incident selon vous ?",
+      onEnter: () => { state.flags.communicatedClients = true; state.flags.catherineUpdated = true; }
+    },
+    actions: [
+      { label: "L'erreur humaine de Théo (il a oublié le filtre)", icon: "👤", goto: 'final_blame' },
+      { label: "Le système : PR sans review QA, tests E2E désactivés, rollback cassé, déploiement sans gate", icon: "🔧", goto: 'final_systemic' },
+      { label: "Le manque de chance (ça aurait pu être n'importe qui)", icon: "🎲", goto: 'final_luck' }
+    ]
+  },
+
+  final_blame: {
+    time: 50,
+    metrics: { errors: 0, latency: 380, rps: 89, tickets: 58 },
+    logs: [],
+    messages: [
+      { who: 'mehdi', ch: '#tech', text: "Si tu mets ça sur Théo, je démissionne. C'est moi qui valide ses PR. C'est moi qui ai laissé E2E désactivé après avril. C'est moi qui n'ai pas redocumenté le rollback. Si tu veux blâmer quelqu'un, blâme-moi. Mais en vrai, c'est le système qui a craqué." }
+    ],
+    scenario: {
+      title: "Mehdi vous recadre",
+      text: "Blâmer Théo, c'est ignorer 4 mois de signaux. Mehdi vous le dit cash. Vous avez votre réponse finale, ou vous reconsidérez ?",
+      onEnter: () => { state.outcome = 'blame'; }
+    },
+    actions: [
+      { label: "Je maintiens : Théo est en faute", icon: "👤", goto: 'report' },
+      { label: "Je reconsidère : c'est systémique", icon: "🔧", goto: 'final_systemic' }
+    ]
+  },
+
+  final_systemic: {
+    time: 50,
+    metrics: { errors: 0, latency: 380, rps: 89, tickets: 58 },
+    logs: [],
+    messages: [
+      { who: 'mehdi', ch: '#tech', text: "Tu as raison. Les vraies causes : tests E2E désactivés en CI, PR mergée avec 1 review sans QA, rollback cassé depuis avril, déploiement à 16h sans gate. Aucune n'est Théo." },
+      { who: 'catherine', ch: '#exec', text: "C'est la bonne lecture. Donnez-moi un plan demain matin avec 3 actions correctrices qui adressent ces causes systémiques. Pas 10. 3." }
+    ],
+    scenario: {
+      title: "Le système, pas la personne",
+      text: "Vous avez vu juste. 4 causes systémiques étaient présentes avant Théo. Le plan demain matin se concentrera dessus. Catherine apprécie la maturité.",
+      onEnter: () => { state.outcome = 'systemic'; }
+    },
+    actions: [
+      { label: "Voir le rapport final", icon: "📊", goto: 'report' }
+    ]
+  },
+
+  final_luck: {
+    time: 50,
+    metrics: { errors: 0, latency: 380, rps: 89, tickets: 58 },
+    logs: [],
+    messages: [
+      { who: 'catherine', ch: '#exec', text: "'Le manque de chance', sérieusement ? Si vous me sortez ça en COMEX demain, vous repartez avec un avertissement. Reformulez. C'est un système qui a craqué, ou c'est une erreur humaine. Choisissez." }
+    ],
+    scenario: {
+      title: "Catherine vous attend au tournant",
+      text: "'Le manque de chance' n'est pas une analyse, c'est une fuite. Catherine ne laissera pas passer. Reformulez.",
+      onEnter: () => { state.outcome = 'luck'; }
+    },
+    actions: [
+      { label: "C'est systémique : 4 causes étaient présentes", icon: "🔧", goto: 'final_systemic' },
+      { label: "C'est Théo qui a fait l'erreur", icon: "👤", goto: 'final_blame' }
+    ]
+  }
+
+};
+
+// ===========================================================
+// Rendering helpers
+// ===========================================================
+function $(id) { return document.getElementById(id); }
+
+function clockStr(min) {
+  const h = 16 + Math.floor(min / 60);
+  const m = min % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
+function updateClock() {
+  $('clock').textContent = clockStr(state.clockMinutes);
+  const elapsed = state.clockMinutes - 22;
+  $('elapsed').textContent = `T+${elapsed}`;
+}
+
+function updateMetrics(m) {
+  Object.assign(state.metrics, m);
+  $('val-errors').textContent = state.metrics.errors;
+  $('val-latency').textContent = `${state.metrics.latency} ms`;
+  $('val-rps').textContent = state.metrics.rps;
+  $('val-tickets').textContent = state.metrics.tickets;
+
+  // Color coding
+  setMetricStatus('errors', state.metrics.errors, [10, 50]);
+  setMetricStatus('latency', state.metrics.latency, [800, 1500]);
+  setMetricStatus('rps', state.metrics.rps, [60, 40], true); // lower is worse here
+  setMetricStatus('tickets', state.metrics.tickets, [10, 30]);
+
+  // Trends
+  setTrend('errors', state.metrics.errors);
+  setTrend('latency', state.metrics.latency);
+  setTrend('rps', state.metrics.rps);
+  setTrend('tickets', state.metrics.tickets);
+
+  drawChart();
+}
+
+function setMetricStatus(id, val, thresholds, lowerIsWorse=false) {
+  const metric = $('metric-' + id);
+  const value = $('val-' + id);
+  metric.classList.remove('warning', 'danger', 'healthy');
+  value.classList.remove('warning', 'danger', 'healthy');
+  let status;
+  if (lowerIsWorse) {
+    if (val < thresholds[1]) status = 'danger';
+    else if (val < thresholds[0]) status = 'warning';
+    else status = 'healthy';
+  } else {
+    if (val > thresholds[1]) status = 'danger';
+    else if (val > thresholds[0]) status = 'warning';
+    else status = 'healthy';
+  }
+  metric.classList.add(status);
+  value.classList.add(status);
+}
+
+function setTrend(id, val) {
+  const el = $('trend-' + id);
+  if (id === 'errors' || id === 'latency' || id === 'tickets') {
+    if (val > 50) el.textContent = '⬆ critique';
+    else if (val > 10) el.textContent = '⬆ en hausse';
+    else el.textContent = 'stable';
+  } else if (id === 'rps') {
+    if (val < 60) el.textContent = '⬇ trafic anormal';
+    else el.textContent = 'normal';
+  }
+}
+
+function drawChart() {
+  const chart = $('chart');
+  // Keep label
+  chart.innerHTML = '<span class="chart-label mono">5xx /min - 30 dernières minutes</span>';
+  // Generate ~30 bars from past low to current spike
+  const currentErr = state.metrics.errors;
+  for (let i = 0; i < 30; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'chart-bar';
+    bar.style.left = `${(i * 3.33)}%`;
+    let val;
+    if (i < 17) {
+      val = 2 + Math.random() * 4; // baseline noise
+    } else {
+      const progress = (i - 17) / 13;
+      val = 2 + progress * Math.max(currentErr, 10);
+      bar.classList.add('spike');
+    }
+    const height = Math.min(100, (val / Math.max(currentErr, 30)) * 100);
+    bar.style.height = `${height}%`;
+    chart.appendChild(bar);
+  }
+}
+
+function addLogs(logs) {
+  const panel = $('logsPanel');
+  logs.forEach((log, i) => {
+    setTimeout(() => {
+      const line = document.createElement('div');
+      line.className = 'log-line ' + (log.type || 'info');
+      line.textContent = log.text;
+      panel.appendChild(line);
+      panel.scrollTop = panel.scrollHeight;
+    }, i * 250);
+  });
+}
+
+function addMessages(messages) {
+  const panel = $('chatPanel');
+  messages.forEach((msg, i) => {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'message';
+      const avatarLetter = msg.who.charAt(0).toUpperCase();
+      const authorName = ({
+        julien: 'Julien (Support)',
+        karim: 'Karim (Ops)',
+        mehdi: 'Mehdi (Senior)',
+        catherine: 'Catherine (COO)',
+        hadrien: 'Hadrien (CEO)',
+        loubna: 'Loubna (Senior)',
+        system: 'console'
+      })[msg.who] || msg.who;
+      el.innerHTML = `
+        <div class="avatar ${msg.who}">${avatarLetter}</div>
+        <div class="msg-body">
+          <div class="msg-header">
+            <span class="msg-author">${authorName}</span>
+            <span class="msg-channel">${msg.ch}</span>
+            <span class="msg-time">${clockStr(state.clockMinutes)}</span>
+          </div>
+          <div class="msg-content">${msg.text}</div>
+        </div>
+      `;
+      panel.appendChild(el);
+      panel.scrollTop = panel.scrollHeight;
+    }, i * 600);
+  });
+}
+
+function renderScene(sceneId) {
+  const scene = scenes[sceneId];
+  if (!scene) return;
+  state.scene = sceneId;
+  state.clockMinutes = scene.time;
+  updateClock();
+  $('sceneId').textContent = sceneId;
+
+  if (scene.onEnter) scene.onEnter();
+  if (scene.metrics) updateMetrics(scene.metrics);
+  if (scene.logs && scene.logs.length) addLogs(scene.logs);
+  if (scene.messages && scene.messages.length) addMessages(scene.messages);
+
+  // Scenario
+  if (scene.scenario) {
+    $('scenarioPanel').innerHTML = `<h3>${scene.scenario.title}</h3><p>${scene.scenario.text}</p>`;
+  } else {
+    $('scenarioPanel').innerHTML = '';
+  }
+
+  // Actions
+  const actionsPanel = $('actionsPanel');
+  actionsPanel.innerHTML = '';
+  if (scene.actions && scene.actions.length) {
+    scene.actions.forEach(action => {
+      const btn = document.createElement('button');
+      btn.className = 'action-btn';
+      btn.innerHTML = `
+        <span class="icon">${action.icon || '→'}</span>
+        <span class="label">${action.label}</span>
+      `;
+      btn.onclick = () => {
+        if (action.flag) state.flags[action.flag] = true;
+        addDecision(action.label);
+        if (action.goto === 'report') {
+          showReport();
+        } else {
+          renderScene(action.goto);
+        }
+      };
+      actionsPanel.appendChild(btn);
+    });
+  }
+}
+
+function addDecision(text) {
+  state.decisions.push({ time: clockStr(state.clockMinutes), text });
+  const log = $('decisionLog');
+  if (state.decisions.length === 1) log.innerHTML = '';
+  const item = document.createElement('div');
+  item.className = 'decision-item';
+  item.innerHTML = `
+    <span class="decision-time">${clockStr(state.clockMinutes)}</span>
+    <span class="decision-text">${text}</span>
+  `;
+  log.appendChild(item);
+}
+
+// ===========================================================
+// Final report
+// ===========================================================
+function showReport() {
+  $('simulationScreen').classList.remove('active');
+  const report = $('reportScreen');
+  report.classList.add('active');
+  $('modeLabel').textContent = 'POST-MORTEM';
+
+  // Compute scores
+  let commScore = 60;
+  let techScore = 60;
+  let leadScore = 60;
+
+  // Decision-based adjustments
+  if (state.flags.investigatedLogs) techScore += 15;
+  if (state.flags.rollbackFailed) techScore -= 15;
+  if (state.flags.permissionsBugFound) techScore += 10;
+  if (state.flags.e2eTestMentioned) leadScore += 10;
+  if (state.flags.endpointDisabled) techScore += 10;
+  if (state.flags.communicatedClients) commScore += 20;
+  if (state.flags.catherineUpdated) commScore += 10;
+
+  // Outcome-based
+  let outcomeLabel, outcomeClass, outcomeMsg;
+  switch (state.outcome) {
+    case 'systemic':
+      outcomeLabel = 'Lecture systémique';
+      outcomeClass = 'good';
+      outcomeMsg = "Vous avez identifié les 4 causes systémiques. C'est une lecture mature, alignée avec une culture de post-mortem sans blâme. Catherine vous fait confiance pour le COMEX de demain.";
+      leadScore += 25;
+      break;
+    case 'blame':
+      outcomeLabel = 'Vous avez blâmé Théo';
+      outcomeClass = 'bad';
+      outcomeMsg = "Vous avez nommé Théo comme cause. Mehdi a démissionné mentalement de votre leadership. L'équipe se ferme. La culture qualité que vous espériez instaurer vient de prendre 6 mois de retard.";
+      leadScore -= 30;
+      break;
+    case 'luck':
+      outcomeLabel = 'Vous avez parlé de "manque de chance"';
+      outcomeClass = 'bad';
+      outcomeMsg = "Catherine ne tolère pas l'absence d'analyse. Votre crédibilité en COMEX est compromise.";
+      leadScore -= 35;
+      break;
+    default:
+      outcomeLabel = 'Incident résolu mais sans post-mortem';
+      outcomeClass = 'medium';
+      outcomeMsg = "Vous avez stabilisé le service mais le post-mortem n'a pas été conduit. Les causes restent ouvertes. Risque de récidive.";
+      leadScore -= 10;
+  }
+
+  commScore = Math.max(0, Math.min(100, commScore));
+  techScore = Math.max(0, Math.min(100, techScore));
+  leadScore = Math.max(0, Math.min(100, leadScore));
+  const overall = Math.round((commScore + techScore + leadScore) / 3);
+
+  // Build report
+  let html = `
+    <h2>Post-mortem de l'incident</h2>
+    <div class="outcome-banner ${outcomeClass}">
+      <h3>${outcomeLabel}</h3>
+      <p>${outcomeMsg}</p>
+    </div>
+
+    <div class="report-section">
+      <h3>Score global : ${overall} / 100</h3>
+      <div class="scores">
+        <div class="score-card">
+          <div class="score-value">${techScore}</div>
+          <div class="score-label">Technique</div>
+        </div>
+        <div class="score-card">
+          <div class="score-value">${commScore}</div>
+          <div class="score-label">Communication</div>
+        </div>
+        <div class="score-card">
+          <div class="score-value">${leadScore}</div>
+          <div class="score-label">Leadership</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="report-section">
+      <h3>Vos décisions, dans l'ordre</h3>
+      <ul>
+        ${state.decisions.map(d => `<li><strong>${d.time}</strong> - ${d.text}</li>`).join('')}
+      </ul>
+    </div>
+
+    <div class="report-section">
+      <h3>Les 4 causes racines de cet incident</h3>
+      <ul>
+        <li><strong>Tests E2E désactivés en CI</strong> depuis avril (suite à l'incident SSO, jamais ré-activés). Si actifs, le bug aurait été détecté au build.</li>
+        <li><strong>PR mergée avec 1 seul reviewer</strong> sur un module critique (records), sans validation QA.</li>
+        <li><strong>Déploiement automatique sans gate</strong> : merge sur main = production immédiate.</li>
+        <li><strong>Rollback automatique cassé</strong> depuis avril, jamais réparé. Le post-mortem SSO listait cette action, jamais exécutée.</li>
+      </ul>
+      <p style="margin-top: 12px; color: var(--text-secondary);">
+        <strong>Ces 4 causes étaient TOUTES présentes dans le dossier d'onboarding distribué lundi matin.</strong> Section coverage, section politique de release, section post-mortem SSO. Les groupes qui les ont vues hier dans la cartographie peuvent maintenant les adresser dans leur roadmap. Les autres viennent de les découvrir dans la douleur.
+      </p>
+    </div>
+
+    <div class="report-section">
+      <h3>Ce qu'on retient pour le plan qualité</h3>
+      <ul>
+        <li>Réactiver les tests E2E sur les modules critiques (records, prescriptions, payments).</li>
+        <li>Instituer une revue de PR à 2 personnes sur ces 3 modules.</li>
+        <li>Réparer le mécanisme de rollback (action listée et oubliée depuis avril).</li>
+        <li>Fenêtre de release : pas de déploiement après 15h, jamais le vendredi.</li>
+        <li>Post-mortem sans blâme à instaurer : la cause systémique, jamais la personne.</li>
+      </ul>
+    </div>
+
+    <button class="restart-btn" onclick="location.reload()">Recommencer l'incident</button>
+  `;
+  report.innerHTML = html;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ===========================================================
+// Boot
+// ===========================================================
+function startSimulation() {
+  $('introScreen').style.display = 'none';
+  $('simulationScreen').classList.add('active');
+  $('modeLabel').textContent = 'INCIDENT EN COURS';
+  renderScene('start');
+}
+</script>
+
+</body>
+</html>
